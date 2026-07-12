@@ -1,0 +1,15 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const css = fs.readFileSync('css/app.css','utf8');
+assert(app.includes('class="panel till-menu-panel"'));
+assert(app.includes('class="item-grid-scroll"><div class="item-grid"'));
+assert(app.includes('class="ticket-content-scroll"'));
+assert(app.includes("option-card-selectable"));
+assert(app.includes("option-select-all"));
+assert(app.includes("option-card-variable"));
+assert(css.includes('.item-grid-scroll'));
+assert(css.includes('.ticket-content-scroll'));
+assert(css.includes('.option-card-selectable'));
+assert(css.includes('.option-select-all'));
+console.log('Till prompt and independent scroll tests passed');

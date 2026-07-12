@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Nook ePOS</title>
+  <link rel="stylesheet" href="css/app.css?v=1.1.5">
+</head>
+<body>
+  <div id="appShell">
+    <header class="topbar">
+      <div class="brand" aria-label="The Nook ePOS version">
+        <div class="brand-kicker">THE NOOK</div>
+        <div class="brand-title">ePOS</div>
+        <div class="brand-version" id="uiVersion">1.1.5</div>
+        <div class="brand-sub">Browser / iPad build</div>
+      </div>
+      <nav id="topNav" class="topnav" aria-label="Main tabs"></nav>
+    </header>
+
+    <div id="syncBanner" class="sync-banner">Starting…</div>
+    <main id="main" class="main"></main>
+  </div>
+
+  <div id="modalRoot"></div>
+  <div id="toastRoot" class="toast-root"></div>
+
+  <script src="js/release.js?v=1.1.5"></script>
+  <script src="js/config.js?v=1.1.5"></script>
+  <script src="js/seed-data.js?v=1.1.5"></script>
+  <script src="js/core.js?v=1.1.5"></script>
+  <script src="js/app.js?v=1.1.5"></script>
+</body>
+</html>

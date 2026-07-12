@@ -1,0 +1,11 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const css = fs.readFileSync('css/app.css', 'utf8');
+assert(app.includes('function kitchenOpenTicketCounts(queue)'), 'missing kitchen count helper');
+assert(app.includes('Open Food'), 'missing Open Food label');
+assert(app.includes('Open Drinks'), 'missing Open Drinks label');
+assert(app.includes("sectionState.FoodStatus !== 'COMPLETE'"), 'food count must respect section completion');
+assert(app.includes("sectionState.DrinksStatus !== 'COMPLETE'"), 'drink count must respect section completion');
+assert(css.includes('.kitchen-open-counts'), 'missing kitchen count styling');
+console.log('kitchen open count tests passed');

@@ -1,0 +1,18 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const backend = fs.readFileSync('google/Code.gs','utf8');
+const config = fs.readFileSync('js/config.js','utf8');
+const html = fs.readFileSync('index.html','utf8');
+assert(config.includes("frontendVersion: '1.0.11'"));
+assert(html.includes('id="uiVersion"'));
+assert(app.includes("uiVersionEl.textContent = CONFIG.frontendVersion"));
+assert(app.includes("data-action=\"export-reports\""));
+assert(app.includes("data-action=\"clear-reports\""));
+assert(backend.includes("action === 'clearReports'"));
+assert(backend.includes("request.password1 || '') !== '01287'"));
+assert(backend.includes("request.password2 || '') !== '01827'"));
+assert(backend.includes("setMeta_('NextTicketNumber', '0')"));
+assert(backend.includes("action === 'menuSnapshot'"));
+assert(app.includes('MENU_POLL_INTERVAL_MS = 5000'));
+console.log('Version, reports and menu sync tests passed');

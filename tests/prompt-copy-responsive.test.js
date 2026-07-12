@@ -1,0 +1,14 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const css = fs.readFileSync('css/app.css', 'utf8');
+const backend = fs.readFileSync('google/Code.gs', 'utf8');
+assert(app.includes('renderPromptCopyOptions'), 'category-grouped prompt source renderer missing');
+assert(app.includes('copyItemPrompts'), 'frontend copy action missing');
+assert(app.includes('<optgroup label='), 'category optgroups missing');
+assert(backend.includes("action === 'copyItemPrompts'"), 'backend route missing');
+assert(backend.includes('function copyItemPrompts_'), 'backend copy function missing');
+assert(backend.includes("uid_('P')") && backend.includes("uid_('O')"), 'new prompt/option IDs missing');
+assert(css.includes('.prompt-copy-panel'), 'prompt copy styling missing');
+assert(css.includes('@media (max-width: 430px)'), 'small-device responsive rules missing');
+console.log('Prompt copy and responsive tests passed');
