@@ -1,0 +1,10 @@
+const fs=require('fs');const assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');const css=fs.readFileSync('css/app.css','utf8');
+assert(app.includes('kitchenAgeEnabled'));
+assert(app.includes('data-kitchen-created'));
+assert(app.includes('kitchenArrivalUntil'));
+assert(app.includes('Show ticket age timer'));
+assert(css.includes('kitchen-ticket-arriving'));
+assert(css.includes('2px dashed'));
+assert(css.includes('.kitchen-ticket.age-overdue'));
+console.log('KDS visual age 3.8.4 checks passed');

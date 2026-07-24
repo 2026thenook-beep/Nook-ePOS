@@ -1,0 +1,12 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const backend = fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes("var itemCategory=item.CategoryName||categoryName(item.CategoryID)||'Uncategorised'"), 'refund modal must resolve category');
+assert(app.includes('<div class="ticket-category">'), 'refund modal must render category');
+assert(backend.includes('function enrichTicketItemCategories_(items)'), 'email backend needs category enrichment helper');
+assert(backend.includes("rowsToObjects_('Categories')"), 'email category fallback must use Categories');
+assert(backend.includes("rowsToObjects_('MenuItems')"), 'email category fallback must use MenuItems');
+assert(backend.includes("lines.push('  Category: ' + (item.CategoryName || 'Uncategorised'))"), 'plain text email must show category');
+assert(backend.includes("receiptEscape_(item.CategoryName || item.CategoryID || 'Uncategorised')"), 'HTML email must show category');
+console.log('category refund/email tests passed');

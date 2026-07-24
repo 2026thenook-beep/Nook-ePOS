@@ -1,0 +1,13 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const css=fs.readFileSync('css/app.css','utf8');
+const rel=fs.readFileSync('js/release.js','utf8');
+assert(app.includes('option-drag-handle'));
+assert(app.includes('pointerdown'));
+assert(app.includes('applyPromptOptionOrder'));
+assert(app.includes('reloadPromptOptionsFromServer'));
+assert(app.includes("await reloadPromptOptionsFromServer(promptId)"));
+assert(css.includes('touch-action: none'));
+assert(rel.includes("appVersion: '3.8.4'"));
+assert(rel.includes("appVersion: '3.8.4'"));
+console.log('Prompt option drag and authoritative reload 3.8.4 checks passed');

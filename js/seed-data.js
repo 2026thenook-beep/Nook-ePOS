@@ -1,8 +1,8 @@
 window.NOOK_SEED = {
   "meta": {
     "AppName": "The Nook ePOS",
-    "FrontendVersion": "1.1.5",
-    "BackendVersion": "1.1.5",
+    "FrontendVersion": "3.8.4",
+    "BackendVersion": "3.8.4",
     "DatabaseVersion": "1.0.6",
     "BuildDate": "2026-07-11",
     "Source": "Clean ePOS build from uploaded feature list"
@@ -614,7 +614,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782656060858_727",
@@ -624,7 +625,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782656217930_829",
@@ -634,7 +636,8 @@ window.NOOK_SEED = {
       "Required": true,
       "Sort": 3,
       "Active": true,
-      "AllowNotes": true
+      "AllowNotes": true,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782669309730_362",
@@ -644,7 +647,8 @@ window.NOOK_SEED = {
       "Required": true,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782669364652_641",
@@ -654,7 +658,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782670248767_972",
@@ -664,7 +669,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782670291939_777",
@@ -674,7 +680,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782670649954_117",
@@ -684,7 +691,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782670720725_802",
@@ -694,7 +702,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782670841986_326",
@@ -704,7 +713,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782670896865_479",
@@ -714,7 +724,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782670988765_8",
@@ -724,7 +735,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671039163_411",
@@ -734,7 +746,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671103928_679",
@@ -744,7 +757,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671137622_875",
@@ -754,7 +768,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671214961_788",
@@ -764,7 +779,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 3,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671273652_723",
@@ -774,7 +790,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 4,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671547423_898",
@@ -784,7 +801,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": false,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671625353_843",
@@ -794,7 +812,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671731427_496",
@@ -804,7 +823,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782671801202_159",
@@ -814,7 +834,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782672804167_232",
@@ -824,7 +845,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782673004962_498",
@@ -834,7 +856,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782673229331_122",
@@ -844,7 +867,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782673368316_835",
@@ -854,7 +878,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782673424197_513",
@@ -864,7 +889,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782673521633_691",
@@ -874,7 +900,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782673706645_426",
@@ -884,7 +911,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782673782787_326",
@@ -894,7 +922,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782678982466_39",
@@ -904,7 +933,8 @@ window.NOOK_SEED = {
       "Required": true,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782732026962_42",
@@ -914,7 +944,8 @@ window.NOOK_SEED = {
       "Required": true,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782732082198_82",
@@ -924,7 +955,8 @@ window.NOOK_SEED = {
       "Required": true,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782732169490_761",
@@ -934,7 +966,8 @@ window.NOOK_SEED = {
       "Required": true,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "Pmqzseelbp0zgy",
@@ -944,7 +977,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 1,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782847529725723",
@@ -954,7 +988,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 2,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782847529725908",
@@ -964,7 +999,8 @@ window.NOOK_SEED = {
       "Required": false,
       "Sort": 3,
       "Active": true,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     },
     {
       "PromptID": "P1782934439024872",
@@ -974,7 +1010,8 @@ window.NOOK_SEED = {
       "Required": true,
       "Sort": 4,
       "Active": false,
-      "AllowNotes": false
+      "AllowNotes": false,
+      "ShowTitleOnKDS": true
     }
   ],
   "promptOptions": [
@@ -1971,6 +2008,7 @@ window.NOOK_SEED = {
   ],
   "settings": {
     "StaffDiscountPercent": "10",
+    "KitchenDisplayEnabled": "TRUE",
     "LastConfirmedScriptUrl": "",
     "LastConfirmedUrlVersion": "",
     "LastConfirmedUrlSavedAt": "",

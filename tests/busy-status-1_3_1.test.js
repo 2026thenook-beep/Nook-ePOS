@@ -1,0 +1,12 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const adminSave = fs.readFileSync('js/admin-save.js','utf8');
+const css = fs.readFileSync('css/app.css','utf8');
+assert(app.includes("showBusyMessage('Loading — Please wait'"));
+assert(app.includes("busyMessage: 'Saving this menu item to Google Sheets.'"));
+assert(app.includes("busyMessage: 'Saving this item prompt to Google Sheets.'"));
+assert(adminSave.includes("options.showBusy('Saving — Please wait'"));
+assert(app.includes('function hideBusyMessage()'));
+assert(css.includes('.busy-spinner'));
+console.log('busy-status-1_3_1.test.js passed');

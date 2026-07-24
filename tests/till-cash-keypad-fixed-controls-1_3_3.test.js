@@ -1,0 +1,15 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const css=fs.readFileSync('css/app.css','utf8');
+const release=fs.readFileSync('js/release.js','utf8');
+assert(app.includes('openCashKeypad'));
+assert(app.includes("data-modal-action=\"cash-digit\""));
+assert(app.includes('cashDigitsToValue'));
+assert(app.includes('ticket-items-scroll'));
+assert(app.includes('ticket-controls-static'));
+assert(app.includes("action === 'open-cash-keypad'"));
+assert(css.includes('.ticket-items-scroll'));
+assert(css.includes('.ticket-controls-static'));
+assert(css.includes('.cash-paid-display'));
+assert(release.includes("appVersion: '3.8.4'"));
+console.log('Till cash keypad and fixed controls 3.8.4 checks passed');

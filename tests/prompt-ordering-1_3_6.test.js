@@ -1,0 +1,13 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const release = fs.readFileSync('js/release.js', 'utf8');
+assert(release.includes("appVersion: '3.8.4'"));
+assert(app.includes("data-action=\"move-' + kind + '-up\""));
+assert(app.includes("data-action=\"move-' + kind + '-down\""));
+assert(app.includes("function movePrompt(promptId, direction)"));
+assert(app.includes("function movePromptOption(optionId, direction)"));
+assert(app.includes("return maximum + 10;"));
+assert(app.includes("Sort: nextScopedSort(state.data.prompts"));
+assert(app.includes("Sort: nextScopedSort(state.data.promptOptions"));
+console.log('prompt ordering 3.8.4 tests passed');

@@ -1,19 +1,19 @@
 
 /*
- * The Nook ePOS 1.1.5 - Consolidated Google Apps Script backend
+ * The Nook ePOS 2.1.0 - Consolidated Google Apps Script backend
  * Deploy as a Web App and paste the Web App URL into js/config.js or Settings in the browser app.
  * This script can be bound to a Google Sheet or can create/use a spreadsheet ID stored in Script Properties.
  */
 
-var NOOK_VERSION = '1.1.5';
+var NOOK_VERSION = '3.8.4';
 var NOOK_DATABASE_VERSION = '1.0.6';
 var NOOK_APP_NAME = 'The Nook ePOS';
 
 var SEED_DATA = {
   "meta": {
     "AppName": "The Nook ePOS",
-    "FrontendVersion": "1.1.5",
-    "BackendVersion": "1.1.5",
+    "FrontendVersion": "3.8.4",
+    "BackendVersion": "3.8.4",
     "DatabaseVersion": "1.0.6",
     "BuildDate": "2026-07-11",
     "Source": "Clean ePOS build from uploaded feature list"
@@ -1995,6 +1995,7 @@ var SEED_DATA = {
   "ticketItems": [],
   "ticketAddOns": [],
   "refunds": [],
+  "refundItems": [],
   "kitchenQueue": [],
   "deletedItems": []
 };
@@ -2004,16 +2005,18 @@ var SHEET_SCHEMAS = {
   Settings: ['Key', 'Value'],
   Categories: ['CategoryID', 'CategoryName', 'Sort', 'Active', 'ButtonColour', 'IsDrinkCategory'],
   MenuItems: ['ItemID', 'CategoryID', 'CategoryName', 'ItemName', 'Description', 'Price', 'Active', 'Sort', 'LoyaltyEligible'],
-  Prompts: ['PromptID', 'TriggerItemID', 'PromptTitle', 'PromptType', 'Required', 'Sort', 'Active', 'AllowNotes'],
+  Prompts: ['PromptID', 'TriggerItemID', 'PromptTitle', 'PromptType', 'Required', 'Sort', 'Active', 'AllowNotes', 'ShowTitleOnKDS'],
   PromptOptions: ['OptionID', 'PromptID', 'OptionText', 'Action', 'Value', 'Price', 'Sort', 'Active', 'AllowValue'],
   Tickets: ['TicketID', 'TicketNumber', 'CreatedAt', 'OrderType', 'ServerName', 'TableNumber', 'CustomerName', 'Subtotal', 'AddOnTotal', 'DiscountTotal', 'Total', 'PaymentMethod', 'CashTendered', 'ChangeDue', 'Status', 'ClientRequestID', 'LoyaltyTotal'],
   TicketItems: ['TicketItemID', 'TicketID', 'ItemID', 'ItemName', 'CategoryID', 'Quantity', 'BasePrice', 'AddOnTotal', 'LineTotal', 'Note', 'Status', 'LoyaltyRedeemed', 'LoyaltyDiscount'],
   TicketAddOns: ['AddOnID', 'TicketItemID', 'TicketID', 'PromptID', 'PromptTitle', 'OptionID', 'OptionText', 'Quantity', 'UnitPrice', 'Total', 'Action'],
   KitchenQueue: ['KitchenID', 'TicketID', 'TicketNumber', 'CreatedAt', 'OrderType', 'ServerName', 'TableNumber', 'CustomerName', 'Status', 'PayloadJSON'],
   HeldOrders: ['HoldID', 'CreatedAt', 'OrderType', 'ServerName', 'TableNumber', 'CustomerName', 'PayloadJSON', 'Total'],
-  Refunds: ['RefundID', 'TicketID', 'TicketNumber', 'CreatedAt', 'Amount', 'Reason', 'StaffName'],
+  Refunds: ['RefundID', 'RefundNumber', 'TicketID', 'TicketNumber', 'CreatedAt', 'Amount', 'Reason', 'StaffName', 'OriginalPaymentMethod'],
+  RefundItems: ['RefundItemID', 'RefundID', 'TicketID', 'TicketItemID', 'ItemID', 'ItemName', 'CategoryID', 'Quantity', 'UnitRefundAmount', 'LineRefundTotal'],
   DeletedItems: ['DeletedID', 'DeletedAt', 'EntityType', 'EntityID', 'ParentEntityID', 'Name', 'PayloadJSON', 'DeletedBy', 'Reason'],
-  AuditLog: ['EventID', 'CreatedAt', 'Action', 'Entity', 'EntityID', 'PayloadJSON']
+  AuditLog: ['EventID', 'CreatedAt', 'Action', 'Entity', 'EntityID', 'PayloadJSON'],
+  ReceiptEmails: ['ReceiptEmailID', 'CreatedAt', 'TicketID', 'TicketNumber', 'RecipientEmail', 'StaffName', 'Status', 'ErrorMessage', 'RemainingQuota']
 };
 
 var LIST_SHEETS = {
@@ -2027,6 +2030,7 @@ var LIST_SHEETS = {
   kitchenQueue: 'KitchenQueue',
   heldOrders: 'HeldOrders',
   refunds: 'Refunds',
+  refundItems: 'RefundItems',
   deletedItems: 'DeletedItems'
 };
 
@@ -2104,27 +2108,35 @@ function handleRequest_(request) {
     if (action === 'serverInfo') return json_(serverInfoResponse_());
     if (action === 'kitchenSnapshot') return json_(kitchenSnapshotResponse_());
     if (action === 'menuSnapshot') return json_(menuSnapshotResponse_());
+    if (action === 'reportsSnapshot') return json_(reportsSnapshotResponse_(request));
+    if (action === 'ticketHistorySnapshot') return json_(ticketHistorySnapshotResponse_(request));
+    if (action === 'diagnosticsRun') return json_(diagnosticsRun_());
+    if (action === 'diagnosticsEmailTest') return json_(diagnosticsEmailTest_(request));
+    if (action === 'previewDatabaseRepair') return json_({ ok: true, versions: versions_(), schema: previewDatabaseRepair_() });
 
     if (action === 'setSpreadsheetId') return json_(withMaintenanceLock_(function () { return setSpreadsheetId_(request.SpreadsheetID || request.spreadsheetId); }, 'setSpreadsheetId'));
     if (action === 'clearSpreadsheetId') return json_(withMaintenanceLock_(function () { return clearSpreadsheetId_(); }, 'clearSpreadsheetId'));
     if (action === 'setupDatabase' || action === 'repairDatabase') return json_(withMaintenanceLock_(function () {
-      var repair = repairDatabase_({ seedIfEmpty: true });
+      var repair = repairDatabase_({ seedIfEmpty: false });
       return { ok: true, versions: versions_(), schema: repair, data: bootstrapData_() };
     }, action));
     if (action === 'commitTicket') return json_(commitTicket_(request.ticket));
     if (action === 'saveCategory') return json_(withWriteLock_(function () { return saveEntity_('Categories', 'CategoryID', request.category); }, 'saveCategory'));
     if (action === 'saveItem') return json_(withWriteLock_(function () { return saveEntity_('MenuItems', 'ItemID', request.item); }, 'saveItem'));
+    if (action === 'saveItemConfiguration') return json_(withWriteLock_(function () { return saveItemConfiguration_(request.configuration); }, 'saveItemConfiguration'));
     if (action === 'savePrompt') return json_(withWriteLock_(function () { return saveEntity_('Prompts', 'PromptID', request.prompt); }, 'savePrompt'));
     if (action === 'savePromptOption') return json_(withWriteLock_(function () { return saveEntity_('PromptOptions', 'OptionID', request.option); }, 'savePromptOption'));
+    if (action === 'savePromptOptionsBatch') return json_(withWriteLock_(function () { return savePromptOptionsBatch_(request.promptId, request.options); }, 'savePromptOptionsBatch'));
     if (action === 'copyItemPrompts') return json_(withWriteLock_(function () { return copyItemPrompts_(request.sourceItemId, request.targetItemId); }, 'copyItemPrompts'));
     if (action === 'archiveDeleteEntity') return json_(withMaintenanceLock_(function () { return archiveDeleteEntity_(request.entityType, request.id, request.deletedBy, request.reason); }, 'archiveDeleteEntity'));
     if (action === 'holdOrder') return json_(withWriteLock_(function () { return saveEntity_('HeldOrders', 'HoldID', request.hold); }, 'holdOrder'));
     if (action === 'deleteHeldOrder') return json_(withWriteLock_(function () { return deleteRowById_('HeldOrders', 'HoldID', request.HoldID); }, 'deleteHeldOrder'));
     if (action === 'kitchenUpdate') return json_(withWriteLock_(function () { return kitchenUpdate_(request); }, 'kitchenUpdate'));
-    if (action === 'refundTicket') return json_(withWriteLock_(function () { return refundTicket_(request.refund); }, 'refundTicket'));
+    if (action === 'refundTicket') return json_(withWriteLock_(function () { return refundTicket_(request); }, 'refundTicket'));
     if (action === 'saveSetting') return json_(withWriteLock_(function () { return saveSetting_(request.key, request.value); }, 'saveSetting'));
     if (action === 'saveConfirmedUrl') return json_(withWriteLock_(function () { return saveConfirmedUrl_(request); }, 'saveConfirmedUrl'));
-    if (action === 'clearReports') return json_(withMaintenanceLock_(function () { return clearReports_(request); }, 'clearReports')); 
+    if (action === 'clearReports') return json_(withMaintenanceLock_(function () { return clearReports_(request); }, 'clearReports'));
+    if (action === 'emailReceipt') return json_(emailReceipt_(request)); 
     return json_({ ok: false, error: 'Unknown action: ' + action });
   } catch (err) {
     return json_({ ok: false, error: err && err.stack ? err.stack : String(err) });
@@ -2136,41 +2148,19 @@ function json_(obj) {
 }
 
 function bootstrapResponse_() {
-  // Bootstrap is a read path. It may opportunistically repair metadata/schema,
-  // but it must never fail just because another till is saving.
-  var repair = nonBlockingRepairForRead_();
-  return { ok: true, versions: versions_(), schema: repair, data: bootstrapData_() };
+  // Startup is deliberately read-only. Database changes are only made after
+  // an administrator previews and explicitly applies a repair.
+  var preview = previewDatabaseRepair_();
+  return { ok: true, versions: versions_(), schema: preview, data: bootstrapData_() };
 }
 
 function serverInfoResponse_() {
-  var repair = nonBlockingRepairForRead_();
-  return { ok: true, versions: versions_(), schema: repair };
+  return { ok: true, versions: versions_(), schema: previewDatabaseRepair_() };
 }
 
 function nonBlockingRepairForRead_() {
-  var status = schemaStatus_();
-  var metadataReady = false;
-  if (status.ok) {
-    metadataReady = String(getMetaReadOnly_('BackendVersion') || '') === String(NOOK_VERSION) && String(getMetaReadOnly_('DatabaseVersion') || '') === String(NOOK_DATABASE_VERSION);
-  }
-  if (status.ok && metadataReady) return { ok: true, repaired: false, changes: [], status: status, skipped: false, mode: 'read-only' };
-
-  var lock = LockService.getScriptLock();
-  if (!lock.tryLock(750)) {
-    return {
-      ok: true,
-      repaired: false,
-      skipped: true,
-      changes: ['Repair skipped because another till is currently writing. Reads are allowed to continue.'],
-      status: status,
-      mode: 'read-only-skip-repair'
-    };
-  }
-  try {
-    return repairDatabase_({ seedIfEmpty: false });
-  } finally {
-    lock.releaseLock();
-  }
+  // Retained for compatibility with older callers, but it never writes.
+  return previewDatabaseRepair_();
 }
 
 function withWriteLock_(fn, label) {
@@ -2216,19 +2206,64 @@ function setSpreadsheetId_(id) {
   if (!id) throw new Error('Missing SpreadsheetID');
   var ss = SpreadsheetApp.openById(id);
   PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
-  var repair = repairDatabase_({ seedIfEmpty: false });
-  return { ok: true, versions: versions_(), schema: repair, spreadsheetId: ss.getId(), spreadsheetName: ss.getName() };
+  var preview = previewDatabaseRepair_();
+  return { ok: true, versions: versions_(), schema: preview, spreadsheetId: ss.getId(), spreadsheetName: ss.getName() };
 }
 
 function clearSpreadsheetId_() {
   PropertiesService.getScriptProperties().deleteProperty('SPREADSHEET_ID');
   var ss = getSpreadsheet_();
-  var repair = repairDatabase_({ seedIfEmpty: false });
-  return { ok: true, versions: versions_(), schema: repair, spreadsheetId: ss.getId(), spreadsheetName: ss.getName() };
+  var preview = previewDatabaseRepair_();
+  return { ok: true, versions: versions_(), schema: preview, spreadsheetId: ss.getId(), spreadsheetName: ss.getName() };
 }
 
 function setupSheets_() {
   return repairDatabase_({ seedIfEmpty: false });
+}
+
+
+function previewDatabaseRepair_() {
+  var status = schemaStatus_();
+  var changes = [];
+  Object.keys(status.sheets || {}).forEach(function (name) {
+    var sheet = status.sheets[name] || {};
+    if (!sheet.exists) {
+      changes.push('Create missing sheet: ' + name);
+    } else if ((sheet.missingColumns || []).length) {
+      changes.push('Add missing column(s) to ' + name + ': ' + sheet.missingColumns.join(', '));
+    }
+  });
+
+  if (String(getMetaReadOnly_('AppName') || '') !== String(NOOK_APP_NAME)) changes.push('Update metadata: AppName');
+  if (String(getMetaReadOnly_('BackendVersion') || '') !== String(NOOK_VERSION)) changes.push('Update metadata: BackendVersion to ' + NOOK_VERSION);
+  if (String(getMetaReadOnly_('DatabaseVersion') || '') !== String(NOOK_DATABASE_VERSION)) changes.push('Update metadata: DatabaseVersion to ' + NOOK_DATABASE_VERSION);
+  if (!getMetaReadOnly_('NextTicketNumber')) changes.push('Create metadata: NextTicketNumber');
+
+  var requiredSettings = {
+    StaffDiscountPercent: '10',
+    KitchenDisplayEnabled: 'TRUE',
+    KitchenPromptTitlesEnabled: 'TRUE',
+    LastConfirmedScriptUrl: '',
+    LastConfirmedUrlVersion: '',
+    LastConfirmedUrlSavedAt: '',
+    LastConfirmedUrlFrontendVersion: '',
+    LastConfirmedUrlBackendVersion: '',
+    LastConfirmedUrlDatabaseVersion: ''
+  };
+  Object.keys(requiredSettings).forEach(function (key) {
+    if (getSetting_(key) === '') changes.push('Create missing setting: ' + key);
+  });
+
+  return {
+    ok: changes.length === 0,
+    repaired: false,
+    preview: true,
+    requiresRepair: changes.length > 0,
+    changes: changes,
+    status: status,
+    mode: 'read-only-preview',
+    safety: 'Additive only: no existing rows or values will be deleted or overwritten.'
+  };
 }
 
 function repairDatabase_(options) {
@@ -2246,6 +2281,8 @@ function repairDatabase_(options) {
   if (setMetaIfChanged_('DatabaseVersion', NOOK_DATABASE_VERSION)) changes.push('Metadata.DatabaseVersion updated to ' + NOOK_DATABASE_VERSION);
   if (!getMeta_('NextTicketNumber')) { setMeta_('NextTicketNumber', '1'); changes.push('Metadata.NextTicketNumber created'); }
   if (getSetting_('StaffDiscountPercent') === '') { saveSetting_('StaffDiscountPercent', '10'); changes.push('Settings.StaffDiscountPercent defaulted to 10'); }
+  if (getSetting_('KitchenDisplayEnabled') === '') { saveSetting_('KitchenDisplayEnabled', 'TRUE'); changes.push('Settings.KitchenDisplayEnabled defaulted to TRUE'); }
+  if (getSetting_('KitchenPromptTitlesEnabled') === '') { saveSetting_('KitchenPromptTitlesEnabled', 'TRUE'); changes.push('Settings.KitchenPromptTitlesEnabled defaulted to TRUE'); }
   ['LastConfirmedScriptUrl','LastConfirmedUrlVersion','LastConfirmedUrlSavedAt','LastConfirmedUrlFrontendVersion','LastConfirmedUrlBackendVersion','LastConfirmedUrlDatabaseVersion'].forEach(function (key) {
     if (getSetting_(key) === '') { saveSetting_(key, ''); changes.push('Settings.' + key + ' created'); }
   });
@@ -2396,7 +2433,7 @@ function clearReports_(request) {
   if (String(request.passcode || '').trim() !== '2702') {
     throw new Error('The report-clear passcode is incorrect. Hint: Wiesheu.');
   }
-  ['Tickets','TicketItems','TicketAddOns','Refunds','KitchenQueue'].forEach(function (sheetName) {
+  ['Tickets','TicketItems','TicketAddOns','Refunds','RefundItems','KitchenQueue'].forEach(function (sheetName) {
     var sheet = getSheet_(sheetName);
     var lastRow = sheet.getLastRow();
     if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
@@ -2404,6 +2441,50 @@ function clearReports_(request) {
   setMeta_('NextTicketNumber', '0');
   appendAudit_('CLEAR_ALL_REPORTS', 'Reports', 'ALL', { resetTicketCounterTo: 0, clearedAt: new Date().toISOString() });
   return { ok: true, nextTicketNumber: 0 };
+}
+
+function localDateString_(value) {
+  if (!value) return '';
+  var date = value instanceof Date ? value : new Date(value);
+  if (isNaN(date.getTime())) return String(value).slice(0, 10);
+  return Utilities.formatDate(date, 'Europe/London', 'yyyy-MM-dd');
+}
+
+function transactionSnapshotForRange_(fromDate, toDate) {
+  fromDate = String(fromDate || '').slice(0, 10);
+  toDate = String(toDate || fromDate || '').slice(0, 10);
+  var tickets = rowsToObjects_('Tickets').filter(function (row) {
+    var day = localDateString_(row.CreatedAt);
+    return day && (!fromDate || day >= fromDate) && (!toDate || day <= toDate);
+  });
+  var ticketIds = {};
+  tickets.forEach(function (row) { ticketIds[String(row.TicketID)] = true; });
+  var refunds = rowsToObjects_('Refunds').filter(function (row) {
+    var day = localDateString_(row.CreatedAt);
+    return day && (!fromDate || day >= fromDate) && (!toDate || day <= toDate);
+  });
+  var refundIds = {};
+  refunds.forEach(function (row) { refundIds[String(row.RefundID)] = true; });
+  return {
+    tickets: tickets,
+    ticketItems: rowsToObjects_('TicketItems').filter(function (row) { return ticketIds[String(row.TicketID)]; }),
+    ticketAddOns: rowsToObjects_('TicketAddOns').filter(function (row) { return ticketIds[String(row.TicketID)]; }),
+    refunds: refunds,
+    refundItems: rowsToObjects_('RefundItems').filter(function (row) { return refundIds[String(row.RefundID)]; })
+  };
+}
+
+function reportsSnapshotResponse_(request) {
+  var today = Utilities.formatDate(new Date(), 'Europe/London', 'yyyy-MM-dd');
+  var fromDate = String(request.fromDate || today).slice(0, 10);
+  var toDate = String(request.toDate || fromDate).slice(0, 10);
+  return { ok: true, versions: versions_(), fromDate: fromDate, toDate: toDate, data: transactionSnapshotForRange_(fromDate, toDate) };
+}
+
+function ticketHistorySnapshotResponse_(request) {
+  var today = Utilities.formatDate(new Date(), 'Europe/London', 'yyyy-MM-dd');
+  var date = String(request.date || today).slice(0, 10);
+  return { ok: true, versions: versions_(), date: date, data: transactionSnapshotForRange_(date, date) };
 }
 
 function bootstrapData_() {
@@ -2435,7 +2516,7 @@ function rowsToObjects_(sheetName) {
 function coerce_(field, value) {
   if (value instanceof Date) return value.toISOString();
   if (['Active', 'Required', 'AllowNotes', 'AllowValue', 'LoyaltyEligible', 'IsDrinkCategory', 'LoyaltyRedeemed'].indexOf(field) >= 0) return value === true || String(value).toLowerCase() === 'true' || value === 1 || value === '1';
-  if (['Sort', 'Price', 'TicketNumber', 'Subtotal', 'AddOnTotal', 'DiscountTotal', 'Total', 'LoyaltyTotal', 'CashTendered', 'ChangeDue', 'Quantity', 'BasePrice', 'LineTotal', 'LoyaltyDiscount', 'UnitPrice', 'Amount'].indexOf(field) >= 0) {
+  if (['Sort', 'Price', 'TicketNumber', 'Subtotal', 'AddOnTotal', 'DiscountTotal', 'Total', 'LoyaltyTotal', 'CashTendered', 'ChangeDue', 'Quantity', 'BasePrice', 'LineTotal', 'LoyaltyDiscount', 'UnitPrice', 'Amount', 'UnitRefundAmount', 'LineRefundTotal'].indexOf(field) >= 0) {
     if (value === '' || value == null) return '';
     var n = Number(value);
     return isNaN(n) ? value : n;
@@ -2476,6 +2557,170 @@ function copyItemPrompts_(sourceItemId, targetItemId) {
   appendObjects_('PromptOptions', copiedOptions);
   appendAudit_('COPY_PROMPTS', 'MenuItems', targetItemId, { sourceItemId: sourceItemId, targetItemId: targetItemId, promptCount: copiedPrompts.length, optionCount: copiedOptions.length });
   return { ok: true, prompts: copiedPrompts, options: copiedOptions, promptCount: copiedPrompts.length, optionCount: copiedOptions.length };
+}
+
+
+function editableRowValue_(value) {
+  if (value instanceof Date) return value.toISOString();
+  if (value == null) return '';
+  return value;
+}
+
+function readSheetTable_(sheetName) {
+  var sheet = getSheet_(sheetName);
+  var headers = sheetHeaders_(sheetName, true);
+  var lastRow = sheet.getLastRow();
+  var values = lastRow >= 2 ? sheet.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
+  var objects = values.filter(function (row) {
+    return row.some(function (cell) { return cell !== '' && cell != null; });
+  }).map(function (row) {
+    var obj = {};
+    headers.forEach(function (header, index) {
+      if (header) obj[header] = coerce_(header, row[index]);
+    });
+    return obj;
+  });
+  return { sheet: sheet, headers: headers, values: values, objects: objects };
+}
+
+function mergeStoredObject_(stored, incoming) {
+  return Object.assign({}, stored || {}, incoming || {});
+}
+
+function objectsToRows_(headers, objects) {
+  return (objects || []).map(function (obj) {
+    return headers.map(function (header) {
+      return editableRowValue_(Object.prototype.hasOwnProperty.call(obj || {}, header) ? obj[header] : '');
+    });
+  });
+}
+
+function comparableRows_(rows) {
+  return JSON.stringify((rows || []).map(function (row) {
+    return row.map(function (value) {
+      if (value instanceof Date) return value.toISOString();
+      if (value === true || value === false) return value;
+      if (value == null) return '';
+      return String(value);
+    });
+  }));
+}
+
+function writeSheetObjectsIfChanged_(table, objects) {
+  var nextRows = objectsToRows_(table.headers, objects);
+  if (comparableRows_(table.values) === comparableRows_(nextRows)) return false;
+  var previousCount = table.values.length;
+  if (previousCount > 0) table.sheet.getRange(2, 1, previousCount, table.headers.length).clearContent();
+  if (nextRows.length > 0) table.sheet.getRange(2, 1, nextRows.length, table.headers.length).setValues(nextRows);
+  return true;
+}
+
+function saveItemConfiguration_(configuration) {
+  configuration = configuration || {};
+  var item = configuration.item;
+  var prompts = Array.isArray(configuration.prompts) ? configuration.prompts : [];
+  var options = Array.isArray(configuration.options) ? configuration.options : [];
+  if (!item || !item.ItemID) throw new Error('Item configuration is missing its ItemID.');
+  if (!item.ItemName) throw new Error('Item configuration is missing its item name.');
+
+  var itemId = String(item.ItemID);
+  var promptIds = {};
+  prompts.forEach(function (prompt) {
+    if (!prompt || !prompt.PromptID) throw new Error('A prompt is missing its PromptID.');
+    if (String(prompt.TriggerItemID) !== itemId) throw new Error('Prompt belongs to the wrong menu item: ' + prompt.PromptID);
+    promptIds[String(prompt.PromptID)] = true;
+  });
+  options.forEach(function (option) {
+    if (!option || !option.OptionID) throw new Error('A prompt option is missing its OptionID.');
+    if (!promptIds[String(option.PromptID)]) throw new Error('Prompt option belongs to a prompt outside this item: ' + option.OptionID);
+  });
+
+  // Each affected sheet is read once. All comparisons and merges happen in memory.
+  var itemTable = readSheetTable_('MenuItems');
+  var promptTable = readSheetTable_('Prompts');
+  var optionTable = readSheetTable_('PromptOptions');
+
+  var existingItemById = {};
+  itemTable.objects.forEach(function (row) { existingItemById[String(row.ItemID)] = row; });
+  var savedItem = mergeStoredObject_(existingItemById[itemId], item);
+  var nextItems = itemTable.objects.filter(function (row) { return String(row.ItemID) !== itemId; });
+  nextItems.push(savedItem);
+
+  var existingPromptById = {};
+  var oldPromptIds = {};
+  promptTable.objects.forEach(function (row) {
+    existingPromptById[String(row.PromptID)] = row;
+    if (String(row.TriggerItemID) === itemId) oldPromptIds[String(row.PromptID)] = true;
+  });
+  var savedPrompts = prompts.map(function (prompt, index) {
+    var merged = mergeStoredObject_(existingPromptById[String(prompt.PromptID)], prompt);
+    merged.TriggerItemID = item.ItemID;
+    merged.Sort = Number(prompt.Sort || ((index + 1) * 10));
+    return merged;
+  });
+  var nextPrompts = promptTable.objects.filter(function (row) { return String(row.TriggerItemID) !== itemId; }).concat(savedPrompts);
+
+  var existingOptionById = {};
+  optionTable.objects.forEach(function (row) { existingOptionById[String(row.OptionID)] = row; });
+  var optionPositionByPrompt = {};
+  var savedOptions = options.map(function (option) {
+    var promptId = String(option.PromptID);
+    optionPositionByPrompt[promptId] = (optionPositionByPrompt[promptId] || 0) + 1;
+    var merged = mergeStoredObject_(existingOptionById[String(option.OptionID)], option);
+    merged.Sort = optionPositionByPrompt[promptId] * 10;
+    return merged;
+  });
+  var affectedPromptIds = Object.assign({}, oldPromptIds, promptIds);
+  var nextOptions = optionTable.objects.filter(function (row) { return !affectedPromptIds[String(row.PromptID)]; }).concat(savedOptions);
+
+  var changedSheets = [];
+  if (writeSheetObjectsIfChanged_(itemTable, nextItems)) changedSheets.push('MenuItems');
+  if (writeSheetObjectsIfChanged_(promptTable, nextPrompts)) changedSheets.push('Prompts');
+  if (writeSheetObjectsIfChanged_(optionTable, nextOptions)) changedSheets.push('PromptOptions');
+
+  appendAudit_('SAVE_ITEM_CONFIGURATION_DIFF', 'MenuItems', item.ItemID, {
+    changedSheets: changedSheets,
+    promptCount: savedPrompts.length,
+    optionCount: savedOptions.length
+  });
+  return {
+    ok: true,
+    changed: changedSheets.length > 0,
+    changedSheets: changedSheets,
+    configuration: { item: savedItem, prompts: savedPrompts, options: savedOptions }
+  };
+}
+
+function savePromptOptionsBatch_(promptId, options) {
+  if (!promptId) throw new Error('Missing PromptID for prompt option batch save.');
+  if (!Array.isArray(options) || !options.length) throw new Error('No prompt options were supplied.');
+
+  var existingById = {};
+  rowsToObjects_('PromptOptions').filter(function (option) {
+    return String(option.PromptID) === String(promptId);
+  }).forEach(function (option) {
+    existingById[String(option.OptionID)] = option;
+  });
+
+  var seen = {};
+  var saved = options.map(function (option, index) {
+    if (!option || !option.OptionID) throw new Error('A prompt option is missing its OptionID.');
+    if (String(option.PromptID) !== String(promptId)) throw new Error('Prompt option belongs to the wrong prompt: ' + option.OptionID);
+    if (seen[String(option.OptionID)]) throw new Error('Duplicate prompt option in final order: ' + option.OptionID);
+    seen[String(option.OptionID)] = true;
+    var merged = Object.assign({}, existingById[String(option.OptionID)] || {}, option);
+    merged.PromptID = promptId;
+    // The server owns the stored sequence. Only the final array position is used.
+    merged.Sort = (index + 1) * 10;
+    upsertObject_('PromptOptions', 'OptionID', merged);
+    return merged;
+  });
+
+  appendAudit_('SAVE_PROMPT_OPTIONS_BATCH', 'Prompts', promptId, {
+    optionCount: saved.length,
+    finalOrder: saved.map(function (option) { return option.OptionID; })
+  });
+  return { ok: true, promptId: promptId, saved: saved, finalOrder: saved.map(function (option) { return option.OptionID; }) };
 }
 
 function saveEntity_(sheetName, idField, obj) {
@@ -2721,20 +2966,24 @@ function commitTicket_(payload) {
     appendObjects_('TicketItems', ticketItems);
     appendObjects_('TicketAddOns', ticketAddOns);
 
-    var kitchenPayload = kitchenPayload_(ticket, ticketItems, ticketAddOns);
-    var kitchen = {
-      KitchenID: uid_('K'),
-      TicketID: ticketId,
-      TicketNumber: ticketNumber,
-      CreatedAt: now,
-      OrderType: ticket.OrderType,
-      ServerName: ticket.ServerName,
-      TableNumber: ticket.TableNumber,
-      CustomerName: ticket.CustomerName,
-      Status: 'OPEN',
-      PayloadJSON: JSON.stringify(kitchenPayload)
-    };
-    appendObjects_('KitchenQueue', [kitchen]);
+    var kitchen = null;
+    var kitchenEnabled = String(getSetting_('KitchenDisplayEnabled') || 'TRUE').toUpperCase() !== 'FALSE';
+    if (kitchenEnabled) {
+      var kitchenPayload = kitchenPayload_(ticket, ticketItems, ticketAddOns);
+      kitchen = {
+        KitchenID: uid_('K'),
+        TicketID: ticketId,
+        TicketNumber: ticketNumber,
+        CreatedAt: now,
+        OrderType: ticket.OrderType,
+        ServerName: ticket.ServerName,
+        TableNumber: ticket.TableNumber,
+        CustomerName: ticket.CustomerName,
+        Status: 'OPEN',
+        PayloadJSON: JSON.stringify(kitchenPayload)
+      };
+      appendObjects_('KitchenQueue', [kitchen]);
+    }
     appendAudit_('COMMIT_TICKET', 'Tickets', ticketId, { ticket: ticket, ticketItems: ticketItems, ticketAddOns: ticketAddOns });
     return { ok: true, data: { ticket: ticket, ticketItems: ticketItems, ticketAddOns: ticketAddOns, kitchen: kitchen } };
   }, 'commitTicket');
@@ -2822,16 +3071,91 @@ function kitchenPayload_(ticket, items, addons) {
 
 function kitchenUpdate_(request) {
   if (!request || !request.KitchenID) throw new Error('Missing KitchenID');
-  var patch = { Status: request.Status || 'COMPLETE' };
-  if (request.PayloadJSON != null) patch.PayloadJSON = String(request.PayloadJSON || '{}');
-  return updateById_('KitchenQueue', 'KitchenID', request.KitchenID, patch);
+  var rows = rowsToObjects_('KitchenQueue');
+  var existing = rows.filter(function (row) { return String(row.KitchenID) === String(request.KitchenID); })[0];
+  if (!existing) throw new Error('Cannot find ' + request.KitchenID + ' in KitchenQueue');
+
+  var payload = {};
+  try { payload = JSON.parse(String(existing.PayloadJSON || '{}')); }
+  catch (err) { payload = {}; }
+  payload.Sections = payload.Sections || {};
+
+  var items = Array.isArray(payload.Items) ? payload.Items : [];
+  var hasFood = false;
+  var hasDrinks = false;
+  items.forEach(function (item) {
+    var category = rowsToObjects_('Categories').filter(function (c) { return String(c.CategoryID) === String(item.CategoryID); })[0];
+    if (category && truthy_(category.IsDrinkCategory)) hasDrinks = true;
+    else hasFood = true;
+  });
+
+  if (request.CompleteAll === true || request.CompleteAll === 'true') {
+    if (hasFood) payload.Sections.FoodStatus = 'COMPLETE';
+    if (hasDrinks) payload.Sections.DrinksStatus = 'COMPLETE';
+  } else {
+    var sectionName = String(request.SectionName || '').toLowerCase();
+    var sectionStatus = String(request.SectionStatus || '').toUpperCase();
+    if (sectionName !== 'food' && sectionName !== 'drinks') throw new Error('Invalid kitchen section');
+    if (sectionStatus !== 'OPEN' && sectionStatus !== 'COMPLETE') throw new Error('Invalid kitchen section status');
+    if (sectionName === 'food') payload.Sections.FoodStatus = sectionStatus;
+    if (sectionName === 'drinks') payload.Sections.DrinksStatus = sectionStatus;
+  }
+
+  var foodDone = !hasFood || String(payload.Sections.FoodStatus || 'OPEN') === 'COMPLETE';
+  var drinksDone = !hasDrinks || String(payload.Sections.DrinksStatus || 'OPEN') === 'COMPLETE';
+  var overall = foodDone && drinksDone ? 'COMPLETE' : 'OPEN';
+  payload.Sections.CompletedAt = overall === 'COMPLETE' ? new Date().toISOString() : '';
+
+  return updateById_('KitchenQueue', 'KitchenID', request.KitchenID, {
+    Status: overall,
+    PayloadJSON: JSON.stringify(payload)
+  });
 }
 
-function refundTicket_(refund) {
-  if (!refund || !refund.RefundID) throw new Error('Missing refund payload');
+function refundTicket_(request) {
+  request = request || {};
+  var ticketId = String(request.ticketId || '').trim();
+  var requestedItems = request.items || [];
+  var reason = String(request.reason || '').trim();
+  var staffName = String(request.staffName || '').trim();
+  if (!ticketId) throw new Error('Missing ticket ID');
+  if (!requestedItems.length) throw new Error('Select at least one item to refund');
+  if (!reason) throw new Error('A refund reason is required');
+  if (!staffName) throw new Error('The staff name is required');
+
+  var ticket = rowsToObjects_('Tickets').filter(function (row) { return String(row.TicketID) === ticketId; })[0];
+  if (!ticket) throw new Error('The original ticket was not found');
+  var ticketItems = rowsToObjects_('TicketItems').filter(function (row) { return String(row.TicketID) === ticketId; });
+  var previousRefundItems = rowsToObjects_('RefundItems').filter(function (row) { return String(row.TicketID) === ticketId; });
+  var existingRefunds = rowsToObjects_('Refunds').filter(function (row) { return String(row.TicketID) === ticketId; });
+  var refundId = uid_('R');
+  var refundNumber = String(ticket.TicketNumber) + '-R' + (existingRefunds.length + 1);
+  var refundItems = [];
+  var amount = 0;
+
+  requestedItems.forEach(function (selection) {
+    var ticketItemId = String(selection.TicketItemID || '').trim();
+    var quantity = Number(selection.Quantity || 0);
+    if (!ticketItemId || !isFinite(quantity) || quantity <= 0 || Math.floor(quantity) !== quantity) throw new Error('Refund quantities must be whole numbers greater than zero');
+    var sold = ticketItems.filter(function (line) { return String(line.TicketItemID) === ticketItemId; })[0];
+    if (!sold) throw new Error('A selected item does not belong to this ticket');
+    var alreadyRefunded = previousRefundItems.filter(function (line) { return String(line.TicketItemID) === ticketItemId; }).reduce(function (sum, line) { return sum + Number(line.Quantity || 0); }, 0);
+    var soldQuantity = Number(sold.Quantity || 0);
+    if (quantity > soldQuantity - alreadyRefunded) throw new Error(sold.ItemName + ' cannot be refunded above the remaining sold quantity');
+    var netLineValue = Number(sold.LineTotal || 0) - Number(sold.LoyaltyDiscount || 0);
+    var unitRefund = soldQuantity > 0 ? Math.round((netLineValue / soldQuantity) * 100) / 100 : 0;
+    var lineTotal = Math.round(unitRefund * quantity * 100) / 100;
+    amount += lineTotal;
+    refundItems.push({ RefundItemID: uid_('RI'), RefundID: refundId, TicketID: ticketId, TicketItemID: ticketItemId, ItemID: sold.ItemID, ItemName: sold.ItemName, CategoryID: sold.CategoryID, Quantity: quantity, UnitRefundAmount: unitRefund, LineRefundTotal: lineTotal });
+  });
+
+  amount = Math.round(amount * 100) / 100;
+  if (amount <= 0) throw new Error('The calculated refund amount is zero');
+  var refund = { RefundID: refundId, RefundNumber: refundNumber, TicketID: ticketId, TicketNumber: ticket.TicketNumber, CreatedAt: new Date().toISOString(), Amount: amount, Reason: reason, StaffName: staffName, OriginalPaymentMethod: ticket.PaymentMethod || '' };
   appendObjects_('Refunds', [refund]);
-  appendAudit_('REFUND', 'Refunds', refund.RefundID, refund);
-  return { ok: true, saved: refund };
+  appendObjects_('RefundItems', refundItems);
+  appendAudit_('ITEM_REFUND', 'Refunds', refundId, { refund: refund, refundItems: refundItems });
+  return { ok: true, refund: refund, refundItems: refundItems };
 }
 
 function appendAudit_(action, entity, entityId, payload) {
@@ -2910,6 +3234,20 @@ function setKeyValue_(sheetName, key, value) {
   sheet.getRange(lastRow + 1, 1, 1, headers.length).setValues([row]);
 }
 
+function deleteKeyValue_(sheetName, key) {
+  var sheet = getSheet_(sheetName);
+  var headers = sheetHeaders_(sheetName, true);
+  var keyCol = headerIndex_(headers, 'Key') + 1;
+  if (keyCol < 1) throw new Error(sheetName + ' must contain a Key column');
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return false;
+  var keys = sheet.getRange(2, keyCol, lastRow - 1, 1).getValues();
+  for (var i = 0; i < keys.length; i++) {
+    if (String(keys[i][0]) === String(key)) { sheet.deleteRow(i + 2); return true; }
+  }
+  return false;
+}
+
 function uid_(prefix) {
   return String(prefix || 'ID') + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase();
 }
@@ -2928,4 +3266,256 @@ function clampPercent_(value) {
 function money_(value) {
   var n = Number(value || 0);
   return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+
+function diagnosticsRun_() {
+  var results = {};
+  results.network = { status: 'PASS', message: 'Apps Script web app responded successfully.', detail: new Date().toISOString() };
+  try {
+    var ss = getSpreadsheet_();
+    var sheetNames = ss.getSheets().map(function (sheet) { return sheet.getName(); });
+    results.databaseRead = { status: 'PASS', message: 'Live spreadsheet can be read.', detail: ss.getName() + ' • ' + sheetNames.length + ' sheets' };
+  } catch (err) {
+    results.databaseRead = { status: 'FAIL', message: 'Live spreadsheet could not be read.', detail: errorMessage_(err) };
+  }
+  try {
+    var testKey = '__DiagnosticsWriteTest';
+    var previous = getKeyValue_('Settings', testKey);
+    var token = Utilities.getUuid();
+    setKeyValue_('Settings', testKey, token);
+    var confirmed = String(getKeyValue_('Settings', testKey)) === token;
+    if (previous === '' || previous == null) deleteKeyValue_('Settings', testKey); else setKeyValue_('Settings', testKey, previous);
+    results.databaseWrite = confirmed
+      ? { status: 'PASS', message: 'Live spreadsheet write and read-back succeeded.' }
+      : { status: 'FAIL', message: 'The diagnostic value could not be read back correctly.' };
+  } catch (err2) {
+    results.databaseWrite = { status: 'FAIL', message: 'Live spreadsheet write test failed.', detail: errorMessage_(err2) };
+  }
+  try {
+    var queue = rowsToObjects_('KitchenQueue');
+    var open = queue.filter(function (row) { return String(row.Status || '').toUpperCase() !== 'COMPLETED'; }).length;
+    results.kitchen = { status: 'PASS', message: 'Kitchen queue data is readable.', detail: open + ' open ticket(s)' };
+  } catch (err3) {
+    results.kitchen = { status: 'FAIL', message: 'Kitchen queue data could not be read.', detail: errorMessage_(err3) };
+  }
+  try {
+    var versions = versions_();
+    var match = String(versions.BackendVersion) === String(NOOK_VERSION);
+    results.versions = { status: match ? 'PASS' : 'FAIL', message: match ? 'Backend and deployed code versions match.' : 'Version mismatch detected.', detail: 'Backend ' + versions.BackendVersion + ' • Database ' + versions.DatabaseVersion };
+  } catch (err4) {
+    results.versions = { status: 'FAIL', message: 'Version information could not be checked.', detail: errorMessage_(err4) };
+  }
+  try {
+    var quota = MailApp.getRemainingDailyQuota();
+    results.email = { status: quota > 0 ? 'READY' : 'WARN', message: quota > 0 ? 'Email service is authorised and has available quota.' : 'Email is authorised but the daily quota is exhausted.', detail: 'Remaining daily quota: ' + quota };
+  } catch (err5) {
+    results.email = { status: 'FAIL', message: 'Email service is not authorised or unavailable.', detail: errorMessage_(err5) };
+  }
+  return { ok: true, results: results, versions: versionsSafe_() };
+}
+
+function diagnosticsEmailTest_(request) {
+  var recipient = String(request.email || '').trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) throw new Error('A valid test email address is required.');
+  var quota = MailApp.getRemainingDailyQuota();
+  if (quota < 1) throw new Error('The Google Apps Script daily email quota has been used.');
+  MailApp.sendEmail({
+    to: recipient,
+    subject: 'The Nook ePOS diagnostic email',
+    body: 'The Nook ePOS email service is authorised and working.\n\nTest time: ' + new Date().toISOString(),
+    name: 'The Nook'
+  });
+  return { ok: true, recipient: recipient, remainingQuota: MailApp.getRemainingDailyQuota() };
+}
+
+/***************************************************************
+ * THE NOOK EPOS — MANUAL MAINTENANCE FUNCTIONS
+ *
+ * These functions deliberately have no trailing underscore so they
+ * remain visible in the Apps Script function selector. They are safe
+ * administrative entry points for deployment, authorisation and checks.
+ ***************************************************************/
+
+/**
+ * Forces Google to request MailApp authorisation when required and
+ * returns useful confirmation without sending an email.
+ */
+function authoriseEmailService() {
+  var account = '';
+  try { account = Session.getEffectiveUser().getEmail() || ''; } catch (err) { account = ''; }
+  var result = {
+    authorised: true,
+    account: account,
+    remainingQuota: MailApp.getRemainingDailyQuota(),
+    timestamp: new Date().toISOString()
+  };
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+/** Sends a real diagnostic email to the Apps Script owner's account. */
+function sendTestEmailToScriptOwner() {
+  var recipient = String(Session.getEffectiveUser().getEmail() || '').trim();
+  if (!recipient) throw new Error('Google could not identify the script owner email. Use the POS Diagnostics test-email field instead.');
+  return diagnosticsEmailTest_({ email: recipient });
+}
+
+/** Runs the same server-side checks shown in Settings > Diagnostics. */
+function runSystemDiagnostics() {
+  var result = diagnosticsRun_();
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+/** Previews the exact additive changes a repair would make, without writing anything. */
+function previewSpreadsheetRepair() {
+  var result = previewDatabaseRepair_();
+  console.log(JSON.stringify(result, null, 2));
+  return result;
+}
+
+/** Repairs the live spreadsheet schema without adding demonstration data. */
+function repairSpreadsheet() {
+  var result = withMaintenanceLock_(function () {
+    return repairDatabase_({ seedIfEmpty: false });
+  }, 'manualRepairSpreadsheet');
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+/** Sets up or repairs an empty/live database, including required seed defaults. */
+function setupOrRepairDatabase() {
+  var result = withMaintenanceLock_(function () {
+    return repairDatabase_({ seedIfEmpty: true });
+  }, 'manualSetupOrRepairDatabase');
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+/** Confirms which spreadsheet is linked and whether its schema is valid. */
+function verifyDatabaseConnection() {
+  var ss = getSpreadsheet_();
+  var result = {
+    ok: true,
+    spreadsheetId: ss.getId(),
+    spreadsheetName: ss.getName(),
+    spreadsheetUrl: ss.getUrl(),
+    schema: schemaStatus_(),
+    versions: versions_(),
+    timestamp: new Date().toISOString()
+  };
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+function emailReceipt_(request) {
+  var ticketId = String(request.ticketId || request.TicketID || '').trim();
+  var recipient = String(request.email || '').trim();
+  var optionalMessage = String(request.message || '').trim();
+  if (!ticketId) throw new Error('Ticket ID is required.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) throw new Error('A valid customer email address is required.');
+
+  var tickets = rowsToObjects_('Tickets');
+  var ticket = tickets.filter(function (row) { return String(row.TicketID) === ticketId; })[0];
+  if (!ticket) throw new Error('Ticket was not found in Google Sheets.');
+  var items = rowsToObjects_('TicketItems').filter(function (row) { return String(row.TicketID) === ticketId; });
+  enrichTicketItemCategories_(items);
+  var itemIds = {};
+  items.forEach(function (row) { itemIds[String(row.TicketItemID)] = true; });
+  var addOns = rowsToObjects_('TicketAddOns').filter(function (row) { return String(row.TicketID) === ticketId || itemIds[String(row.TicketItemID)]; });
+  var quota = MailApp.getRemainingDailyQuota();
+  if (quota < 1) throw new Error('The Google Apps Script daily email quota has been used.');
+
+  var subject = 'The Nook receipt #' + ticket.TicketNumber;
+  var htmlBody = buildReceiptHtml_(ticket, items, addOns, optionalMessage);
+  var plainBody = buildReceiptText_(ticket, items, addOns, optionalMessage);
+  var status = 'SENT';
+  var errorMessage = '';
+  try {
+    MailApp.sendEmail({ to: recipient, subject: subject, body: plainBody, htmlBody: htmlBody, name: 'The Nook' });
+  } catch (err) {
+    status = 'FAILED';
+    errorMessage = String(err && err.message ? err.message : err);
+  }
+  var remaining = MailApp.getRemainingDailyQuota();
+  withWriteLock_(function () {
+    appendObjects_('ReceiptEmails', [{
+      ReceiptEmailID: Utilities.getUuid(), CreatedAt: new Date().toISOString(), TicketID: ticket.TicketID,
+      TicketNumber: ticket.TicketNumber, RecipientEmail: recipient, StaffName: ticket.ServerName || '',
+      Status: status, ErrorMessage: errorMessage, RemainingQuota: remaining
+    }]);
+    return true;
+  }, 'emailReceiptAudit');
+  if (status !== 'SENT') throw new Error(errorMessage || 'Receipt email failed.');
+  return { ok: true, ticketNumber: ticket.TicketNumber, recipient: recipient, remainingQuota: remaining };
+}
+
+
+function enrichTicketItemCategories_(items) {
+  var categories = {};
+  rowsToObjects_('Categories').forEach(function (category) {
+    categories[String(category.CategoryID || '')] = String(category.CategoryName || '');
+  });
+  var menuItems = {};
+  rowsToObjects_('MenuItems').forEach(function (menuItem) {
+    menuItems[String(menuItem.ItemID || '')] = menuItem;
+  });
+  (items || []).forEach(function (item) {
+    if (String(item.CategoryName || '').trim()) return;
+    var menuItem = menuItems[String(item.ItemID || '')] || {};
+    var categoryId = String(item.CategoryID || menuItem.CategoryID || '');
+    item.CategoryID = categoryId;
+    item.CategoryName = categories[categoryId] || String(menuItem.CategoryName || '') || 'Uncategorised';
+  });
+  return items;
+}
+
+function receiptEscape_(value) {
+  return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function receiptMoney_(value) { return '£' + Number(value || 0).toFixed(2); }
+
+function receiptVariableQuantityMap_() {
+  var map = {};
+  rowsToObjects_('PromptOptions').forEach(function (option) {
+    map[String(option.OptionID || '')] = option.AllowValue === true || String(option.AllowValue).toLowerCase() === 'true' || option.AllowValue === 1 || option.AllowValue === '1';
+  });
+  return map;
+}
+
+function receiptAddOnText_(addOn, variableMap) {
+  var text = String(addOn.OptionText || 'Additional item');
+  if (variableMap[String(addOn.OptionID || '')]) text += ' ×' + Math.max(1, Number(addOn.Quantity || 1));
+  return text;
+}
+
+function buildReceiptHtml_(ticket, items, addOns, optionalMessage) {
+  var addOnMap = {};
+  var variableMap = receiptVariableQuantityMap_();
+  addOns.forEach(function (a) { (addOnMap[a.TicketItemID] = addOnMap[a.TicketItemID] || []).push(a); });
+  var rows = items.map(function (item) {
+    var extras = (addOnMap[item.TicketItemID] || []).map(function (a) { return '<div style="font-size:13px;color:#555;padding-left:14px">+ ' + receiptEscape_(receiptAddOnText_(a, variableMap)) + (Number(a.Total || 0) ? ' ' + receiptMoney_(a.Total) : '') + '</div>'; }).join('');
+    return '<div style="border-bottom:1px solid #eee;padding:10px 0"><div style="display:flex;justify-content:space-between;gap:12px"><strong>' + receiptEscape_(item.Quantity) + ' × ' + receiptEscape_(item.ItemName) + '</strong><strong>' + receiptMoney_(item.LineTotal) + '</strong></div><div style="font-size:12px;color:#777">' + receiptEscape_(item.CategoryName || item.CategoryID || 'Uncategorised') + '</div>' + extras + (item.Note ? '<div style="font-size:13px"><em>Note: ' + receiptEscape_(item.Note) + '</em></div>' : '') + '</div>';
+  }).join('');
+  return '<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#222"><h1 style="margin-bottom:0">The Nook</h1><div style="color:#666">Coffee • Food • Community</div><hr>' + (optionalMessage ? '<p>' + receiptEscape_(optionalMessage).replace(/\n/g, '<br>') + '</p>' : '') + '<h2>Receipt #' + receiptEscape_(ticket.TicketNumber) + '</h2><p>' + receiptEscape_(ticket.CreatedAt) + '<br>' + receiptEscape_(ticket.OrderType || '') + (ticket.TableNumber ? '<br>Table: ' + receiptEscape_(ticket.TableNumber) : '') + (ticket.CustomerName ? '<br>Customer: ' + receiptEscape_(ticket.CustomerName) : '') + '</p>' + rows + '<div style="padding-top:12px"><div>Items: ' + receiptMoney_(ticket.Subtotal) + '</div><div>Additional items: ' + receiptMoney_(ticket.AddOnTotal) + '</div>' + (Number(ticket.LoyaltyTotal || 0) ? '<div>Loyalty: -' + receiptMoney_(ticket.LoyaltyTotal) + '</div>' : '') + (Number(ticket.DiscountTotal || 0) ? '<div>Discount: -' + receiptMoney_(ticket.DiscountTotal) + '</div>' : '') + '<h2>Total: ' + receiptMoney_(ticket.Total) + '</h2><div>Paid by ' + receiptEscape_(ticket.PaymentMethod || '') + '</div></div><p style="margin-top:24px;color:#666">Thank you for visiting The Nook.</p></div>';
+}
+
+function buildReceiptText_(ticket, items, addOns, optionalMessage) {
+  var lines = ['THE NOOK', 'Receipt #' + ticket.TicketNumber, String(ticket.CreatedAt || ''), ''];
+  var addOnMap = {};
+  var variableMap = receiptVariableQuantityMap_();
+  (addOns || []).forEach(function (a) { (addOnMap[a.TicketItemID] = addOnMap[a.TicketItemID] || []).push(a); });
+  if (optionalMessage) lines.push(optionalMessage, '');
+  items.forEach(function (item) {
+    lines.push(String(item.Quantity || 1) + ' x ' + item.ItemName + '  ' + receiptMoney_(item.LineTotal));
+    lines.push('  Category: ' + (item.CategoryName || 'Uncategorised'));
+    (addOnMap[item.TicketItemID] || []).forEach(function (a) {
+      lines.push('  + ' + receiptAddOnText_(a, variableMap) + (Number(a.Total || 0) ? ' ' + receiptMoney_(a.Total) : ''));
+    });
+    if (item.Note) lines.push('  Note: ' + item.Note);
+  });
+  lines.push('', 'Total: ' + receiptMoney_(ticket.Total), 'Paid by ' + (ticket.PaymentMethod || ''), '', 'Thank you for visiting The Nook.');
+  return lines.join('\n');
 }

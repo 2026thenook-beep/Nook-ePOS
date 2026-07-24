@@ -1,0 +1,10 @@
+const fs=require('fs'), assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const css=fs.readFileSync('css/app.css','utf8');
+assert(app.includes('function renderHeldOrderItems(payload)'));
+assert(app.includes("payload && payload.cart"));
+assert(app.includes('held-order-line-main'));
+assert(app.includes('line.AddOns || []'));
+assert(app.includes('Note: '));
+assert(css.includes('.held-order-items'));
+console.log('Held order item detail 3.8.4 checks passed');

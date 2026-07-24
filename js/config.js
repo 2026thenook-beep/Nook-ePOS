@@ -3,8 +3,9 @@
   var RELEASE = window.NOOK_RELEASE || {};
   window.NOOK_CONFIG = {
     appName: RELEASE.appName || 'The Nook ePOS',
-    frontendVersion: RELEASE.frontendVersion || 'unknown',
-    backendVersion: RELEASE.backendVersion || 'unknown',
+    appVersion: RELEASE.appVersion || 'unknown',
+    frontendVersion: RELEASE.appVersion || 'unknown',
+    backendVersion: RELEASE.appVersion || 'unknown',
     databaseVersion: RELEASE.databaseVersion || 'unknown',
 
     // Paste the deployed Google Apps Script Web App URL here after deployment,

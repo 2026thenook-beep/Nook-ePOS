@@ -1,0 +1,12 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const css=fs.readFileSync('css/app.css','utf8');
+const gs=fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes('Complete both'));
+assert(app.includes("data-action=\"complete-kitchen\""));
+assert(app.includes('addOnDisplayText(a, false)'));
+assert(app.includes('function addOnUsesVariableQuantity(addOn)'));
+assert(css.includes('.kitchen-ticket .addon-list'));
+assert(gs.includes('receiptAddOnText_(a, variableMap)'));
+assert(gs.includes("(addOnMap[item.TicketItemID] || []).forEach"));
+console.log('Kitchen ticket readability 3.8.4 checks passed');

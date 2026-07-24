@@ -1,0 +1,11 @@
+const fs = require('fs');
+const assert = require('assert');
+const foundation = fs.readFileSync('js/foundation.js', 'utf8');
+const app = fs.readFileSync('js/app.js', 'utf8');
+assert(foundation.includes('createApiClient'));
+assert(foundation.includes('createUi'));
+assert(foundation.includes('assertReleaseCompatibility'));
+assert(app.includes('Foundation.createApiClient'));
+assert(app.includes('Foundation.createUi'));
+assert(!app.includes('var response = await fetch(url'));
+console.log('3.8.4 foundation checks passed');

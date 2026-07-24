@@ -1,4 +1,4 @@
-# Consolidation report — 1.1.5
+# Consolidation report — 1.1.8
 
 ## Preserved functions
 

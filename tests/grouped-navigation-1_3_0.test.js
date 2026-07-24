@@ -1,0 +1,13 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const css = fs.readFileSync('css/app.css', 'utf8');
+assert(app.includes("label: 'Sales'"));
+assert(app.includes("label: 'Administration'"));
+assert(app.includes("{ route: 'Held', label: 'Held Orders' }"));
+assert(app.includes("{ route: 'Live Tickets', label: 'Ticket History' }"));
+assert(app.includes("{ route: 'Kitchen', label: 'Kitchen Ticket Display' }"));
+assert(app.includes("{ route: 'Admin', label: 'Menu Admin' }"));
+assert(css.includes('.nav-group-sales'));
+assert(css.includes('.nav-group-administration'));
+console.log('Grouped navigation 3.8.4 checks passed');

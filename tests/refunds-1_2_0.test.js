@@ -1,0 +1,14 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const code=fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes('data-action="refund-ticket"'));
+assert(app.includes('function openRefundModal(ticketId)'));
+assert(app.includes("api('refundTicket',{ticketId:ticketId,items:items,reason:reason,staffName:staff})"));
+assert(app.includes("Gross sales less refunds"));
+assert(app.includes("['Refunds',(-refundTotal).toFixed(2)]"));
+assert(code.includes("RefundItems: ['RefundItemID'"));
+assert(code.includes("quantity > soldQuantity - alreadyRefunded"));
+assert(code.includes("appendObjects_('RefundItems', refundItems)"));
+assert(code.includes("appendAudit_('ITEM_REFUND'"));
+assert(code.includes("['Tickets','TicketItems','TicketAddOns','Refunds','RefundItems','KitchenQueue']"));
+console.log('Refund subsystem 3.8.4 checks passed');

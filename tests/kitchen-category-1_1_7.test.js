@@ -1,0 +1,13 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const css = fs.readFileSync('css/app.css','utf8');
+const release = fs.readFileSync('js/release.js','utf8');
+const backend = fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes("item.CategoryName || categoryName(item.CategoryID) || 'Uncategorised'"), 'Kitchen items must resolve their category name');
+assert(app.includes('kitchen-item-category'), 'Kitchen ticket lines must render the category');
+assert(css.includes('.kitchen-item-category'), 'Kitchen category must use a visible POS style');
+assert(release.includes("appVersion: '3.8.4'"), 'Frontend version must be 3.8.4');
+assert(release.includes("appVersion: '3.8.4'"), 'Backend version must be 3.8.4');
+assert(backend.includes("var NOOK_VERSION = '3.8.4'"), 'Backend must be 3.8.4');
+console.log('kitchen category 3.8.4 checks passed');

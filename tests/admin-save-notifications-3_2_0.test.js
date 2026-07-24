@@ -1,0 +1,17 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const foundation = fs.readFileSync('js/foundation.js', 'utf8');
+const adminSave = fs.readFileSync('js/admin-save.js', 'utf8');
+const html = fs.readFileSync('index.html', 'utf8');
+assert(html.includes('js/admin-save.js'), 'shared admin save service must load before app.js');
+assert(adminSave.includes('createAdminSaveService'), 'admin save service missing');
+assert(app.includes('reloadAdminAuthority'), 'authoritative admin reload missing');
+assert(app.includes('data-action=\"save-item-configuration\"'), 'unified item configuration save missing');
+assert(app.includes("data-admin-save=\"category\""), 'category save state missing');
+assert(app.includes('saveItemConfiguration'), 'unified item configuration save function missing');
+assert(!app.includes('window.confirm('), 'native confirm remains in application');
+assert(!app.includes('window.alert('), 'native alert remains in application');
+assert(foundation.includes('toast: function'), 'themed toast service missing');
+assert(foundation.includes('confirm: function'), 'themed confirmation service missing');
+console.log('3.8.4 admin save and notification checks passed.');

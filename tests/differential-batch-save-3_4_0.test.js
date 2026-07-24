@@ -1,0 +1,12 @@
+const fs = require('fs');
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+const backend = fs.readFileSync('google/Code.gs', 'utf8');
+const build = JSON.parse(fs.readFileSync('build-info.json', 'utf8'));
+assert(build.release === '3.8.4', 'release must be 3.8.4');
+assert(backend.includes('function writeSheetObjectsIfChanged_'), 'differential batch writer missing');
+assert(backend.includes("changedSheets.push('MenuItems')"), 'MenuItems differential write missing');
+assert(backend.includes("changedSheets.push('Prompts')"), 'Prompts differential write missing');
+assert(backend.includes("changedSheets.push('PromptOptions')"), 'PromptOptions differential write missing');
+assert(backend.includes("SAVE_ITEM_CONFIGURATION_DIFF"), 'differential save audit missing');
+assert(backend.includes('affectedPromptIds'), 'deleted prompt/option reconciliation missing');
+console.log('Differential batched configuration save regression checks passed.');

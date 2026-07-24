@@ -1,4 +1,4 @@
-# The Nook ePOS Browser 1.1.5
+# The Nook ePOS Browser 1.1.8
 
 ## Till screen simplification
 

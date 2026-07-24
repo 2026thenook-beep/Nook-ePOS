@@ -1,4 +1,4 @@
-# Test notes - The Nook ePOS 1.1.5
+# Test notes - The Nook ePOS 1.1.8
 
 Checked in this build:
 

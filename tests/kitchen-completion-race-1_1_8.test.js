@@ -1,0 +1,15 @@
+const fs = require('fs');
+const assert = (v,m) => { if(!v) throw new Error(m); };
+const app = fs.readFileSync('js/app.js','utf8');
+const backend = fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes('kitchenPendingUpdates'), 'pending update guard missing');
+assert(app.includes("SectionName: sectionName"), 'section-only request missing');
+assert(app.includes("SectionStatus: status"), 'section status request missing');
+assert(app.includes("CompleteAll: true"), 'complete-all request missing');
+assert(app.includes('Never let a polling response overwrite a ticket'), 'poll merge guard missing');
+assert(backend.includes('function kitchenUpdate_(request)'), 'backend kitchen update missing');
+assert(backend.includes("request.SectionName"), 'backend atomic section merge missing');
+assert(backend.includes("payload.Sections.FoodStatus"), 'food merge missing');
+assert(backend.includes("payload.Sections.DrinksStatus"), 'drinks merge missing');
+assert(backend.includes("withWriteLock_(function () { return kitchenUpdate_(request); }"), 'kitchen update must remain write locked');
+console.log('kitchen completion race 3.8.4 checks passed');

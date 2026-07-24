@@ -1,0 +1,12 @@
+{
+  "appName": "The Nook ePOS",
+  "release": "3.8.4",
+  "frontendVersion": "3.8.4",
+  "backendVersion": "3.8.4",
+  "databaseVersion": "1.0.6",
+  "releaseType": "order-type-guided-workflow",
+  "behaviouralCompatibility": "3.4.1",
+  "versionSource": "build-info.json",
+  "architecture": "shared-core-model-presentation-operations",
+  "name": "Guided Eat In and Takeaway Selection"
+}

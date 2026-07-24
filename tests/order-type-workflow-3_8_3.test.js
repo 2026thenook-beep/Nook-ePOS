@@ -1,0 +1,12 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+assert(app.includes("ticketMeta: { OrderType: ''"),'new orders must start without a forced order type');
+assert(app.includes("showOrderTypePrompt('till')"),'Till selection prompt missing');
+assert(app.includes("showOrderTypePrompt('first-item', itemId)"),'first item fallback prompt missing');
+assert(app.includes("state.pendingOrderTypeItemId = pendingItemId || ''"),'pending item preservation missing');
+assert(app.includes("if (pendingItemId) openItemModal(pendingItemId)"),'pending item must resume after selection');
+assert(app.includes("data-modal-action=\"cancel-order-type\""),'cancel option missing');
+assert(app.includes("state.awaitingPostPaymentOrderType = true"),'post-payment trigger missing');
+assert(app.includes("showOrderTypePrompt('post-payment')"),'post-payment popup missing');
+assert(app.includes("state.ticketMeta = Object.assign(state.ticketMeta, payload.meta || {}, { CashPaid: '' })"),'held order metadata must be restored');
+console.log('3.8.3 guided order type workflow verified.');

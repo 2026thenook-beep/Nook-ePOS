@@ -1,0 +1,12 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const backend = fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes('System diagnostics'));
+assert(app.includes("api('diagnosticsRun')"));
+assert(app.includes("api('diagnosticsEmailTest'"));
+assert(app.includes('openPrintDiagnostic'));
+assert(backend.includes("action === 'diagnosticsRun'"));
+assert(backend.includes('function authoriseEmailService()'));
+assert(backend.includes('deleteKeyValue_'));
+console.log('system diagnostics 3.8.4 test passed');

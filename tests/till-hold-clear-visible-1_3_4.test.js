@@ -1,0 +1,13 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const css = fs.readFileSync('css/app.css', 'utf8');
+const release = fs.readFileSync('js/release.js', 'utf8');
+assert(app.includes('class="row ticket-order-actions"'));
+assert(app.includes('data-action="hold-current">Hold order'));
+assert(app.includes('data-action="clear-cart">Clear'));
+assert(app.includes('class="ticket-action-footer"'));
+assert(css.includes('.ticket-action-footer'));
+assert(css.includes('flex: 0 0 auto'));
+assert(release.includes("appVersion: '3.8.4'"));
+console.log('Till Hold/Clear visibility 3.8.4 checks passed');

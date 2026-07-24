@@ -1,4 +1,4 @@
-# Google Apps Script setup - The Nook ePOS 1.1.5
+# Google Apps Script setup - The Nook ePOS 1.1.8
 
 1. Open the live Google Sheet database.
 2. Go to Extensions > Apps Script.

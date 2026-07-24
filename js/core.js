@@ -112,6 +112,7 @@
         OptionID: s.OptionID || '',
         OptionText: s.OptionText || '',
         Action: s.Action || 'Modifier',
+        AllowValue: truthy(s.AllowValue),
         Quantity: Math.max(1, toNumber(s.Quantity, 1)),
         UnitPrice: roundMoney(toNumber(s.UnitPrice != null ? s.UnitPrice : s.Price, 0)),
         Total: roundMoney(Math.max(1, toNumber(s.Quantity, 1)) * toNumber(s.UnitPrice != null ? s.UnitPrice : s.Price, 0))

@@ -1,4 +1,4 @@
-# Test Report — The Nook ePOS Browser 1.1.5
+# Test Report — The Nook ePOS Browser 1.1.8
 
 ## Change verified
 

@@ -1,0 +1,13 @@
+const fs=require('fs'),path=require('path'),assert=require('assert');
+const app=fs.readFileSync(path.join(__dirname,'../js/app.js'),'utf8');
+const rel=fs.readFileSync(path.join(__dirname,'../js/release.js'),'utf8');
+const back=fs.readFileSync(path.join(__dirname,'../google/Code.gs'),'utf8');
+assert(app.includes('data-modal-action=\"email-saved-receipt\"'));
+assert(app.includes("if (ma === 'email-saved-receipt') openEmailReceiptModal"));
+assert(app.includes('function exportMenuItemsByCategory()'));
+assert(app.includes('data-action=\"export-menu-items\"'));
+assert(app.includes("if (action === 'export-menu-items') exportMenuItemsByCategory();"));
+assert(app.includes("['Category', 'Item', 'Description', 'Price', 'Active', 'Loyalty eligible', 'Sort order']"));
+assert(rel.includes("appVersion: '3.8.4'")); assert(rel.includes("appVersion: '3.8.4'"));
+assert(back.includes("var NOOK_VERSION = '3.8.4';"));
+console.log('3.8.4 feature tests passed');

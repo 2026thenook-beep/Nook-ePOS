@@ -1,0 +1,13 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const css = fs.readFileSync('css/app.css', 'utf8');
+assert(app.includes("tillFeedback: { pendingLineIndex: -1, token: 0 }"));
+assert(app.includes('function queueTillAddFeedback(lineIndex)'));
+assert(app.includes('function scheduleTillAddFeedback()'));
+assert(app.includes("line.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })"));
+assert(app.includes('queueTillAddFeedback(state.cart.length - 1);'));
+assert(app.includes('data-cart-index="'));
+assert(css.includes('@keyframes nookCartLineAdded'));
+assert(css.includes('@keyframes nookTicketTotalPulse'));
+console.log('3.8.4 till add feedback verified.');

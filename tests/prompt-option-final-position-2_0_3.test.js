@@ -1,0 +1,13 @@
+const fs=require('fs'), assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const backend=fs.readFileSync('google/Code.gs','utf8');
+const css=fs.readFileSync('css/app.css','utf8');
+assert(app.includes('prompt-option-column-headings'));
+assert(app.includes('<span>Name</span><span>Price</span><span>Type</span><span>Quantity</span>'));
+assert(!app.includes('data-option-field="Sort" inputmode="numeric"'));
+assert(app.includes("api('savePromptOptionsBatch'"));
+assert(backend.includes("action === 'savePromptOptionsBatch'"));
+assert(backend.includes('function savePromptOptionsBatch_'));
+assert(backend.includes('merged.Sort = (index + 1) * 10'));
+assert(css.includes('.prompt-option-column-headings'));
+console.log('Prompt option final-position 3.8.4 checks passed');

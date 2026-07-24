@@ -1,0 +1,15 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const css = fs.readFileSync('css/app.css','utf8');
+const release = fs.readFileSync('js/release.js','utf8');
+const backend = fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes('ticket-category'), 'Ticket lines must display category');
+assert(app.includes('loyalty-item-card'), 'Loyalty menu items must be visually identified');
+assert(app.includes('LOYALTY STAMP REMINDER'), 'Checkout must show loyalty stamp reminder');
+assert(app.includes('loyaltyStampQuantity()'), 'Checkout reminder must calculate qualifying quantity');
+assert(css.includes('.loyalty-stamp-reminder'), 'Loyalty reminder must use POS styling');
+assert(release.includes("appVersion: '3.8.4'"), 'Frontend version must be 3.8.4');
+assert(release.includes("appVersion: '3.8.4'"), 'Backend version must be 3.8.4');
+assert(backend.includes("var NOOK_VERSION = '3.8.4'"), 'Backend must be 3.8.4');
+console.log('ticket category and loyalty 3.8.4 checks passed');

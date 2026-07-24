@@ -1,0 +1,11 @@
+const fs=require('fs'), assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const gs=fs.readFileSync('google/Code.gs','utf8');
+const release=fs.readFileSync('js/release.js','utf8');
+assert(app.includes('Enable Kitchen Ticket Display'));
+assert(app.includes("key: 'KitchenDisplayEnabled'"));
+assert(app.includes('if (!kitchenDisplayEnabled()'));
+assert(gs.includes("getSetting_('KitchenDisplayEnabled')"));
+assert(gs.includes('if (kitchenEnabled)'));
+assert(release.includes("appVersion: '3.8.4'"));
+console.log('Kitchen display toggle 3.8.4 checks passed');
