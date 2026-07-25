@@ -10,4 +10,4 @@ expect(app.includes("event.returnValue = ''"), 'Missing browser close/refresh wa
 expect(app.includes("markPromptOptionDirty(o.OptionID, null)"), 'New options are not queued');
 expect(!app.includes('data-action="save-option" data-id='), 'Individual option Save button is still rendered');
 expect(css.includes('.unsaved-option-warning'), 'Missing unsaved warning styling');
-console.log('Queued prompt option saves 3.8.4 checks passed');
+console.log('Queued prompt option saves 3.8.6 checks passed');

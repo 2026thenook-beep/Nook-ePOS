@@ -7,7 +7,7 @@ const index = fs.readFileSync(root + '/index.html', 'utf8');
 const app = fs.readFileSync(root + '/js/app.js', 'utf8');
 
 ['models.js', 'presentation.js', 'operations.js'].forEach(name => {
-  assert(index.includes('js/' + name + '?v=3.8.4'), name + ' must be loaded by index.html');
+  assert(index.includes('js/' + name + '?v=3.8.6'), name + ' must be loaded by index.html');
 });
 assert(app.includes('Models.normaliseData(data)'), 'app must use canonical data normalisation');
 assert(app.includes('Presentation.renderAddOnList'), 'app must use the shared modifier renderer');
@@ -26,4 +26,4 @@ const text = context.NookPresentation.addOnDisplayText(
   { core: context.NookCore, models: context.NookModels, includePrice: false }
 );
 assert.strictEqual(text, 'Extra Bacon ×2');
-console.log('3.8.4 consolidation tests passed');
+console.log('3.8.6 consolidation tests passed');

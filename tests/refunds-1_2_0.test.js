@@ -11,4 +11,4 @@ assert(code.includes("quantity > soldQuantity - alreadyRefunded"));
 assert(code.includes("appendObjects_('RefundItems', refundItems)"));
 assert(code.includes("appendAudit_('ITEM_REFUND'"));
 assert(code.includes("['Tickets','TicketItems','TicketAddOns','Refunds','RefundItems','KitchenQueue']"));
-console.log('Refund subsystem 3.8.4 checks passed');
+console.log('Refund subsystem 3.8.6 checks passed');

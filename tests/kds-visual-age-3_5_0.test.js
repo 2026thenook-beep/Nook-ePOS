@@ -7,4 +7,4 @@ assert(app.includes('Show ticket age timer'));
 assert(css.includes('kitchen-ticket-arriving'));
 assert(css.includes('2px dashed'));
 assert(css.includes('.kitchen-ticket.age-overdue'));
-console.log('KDS visual age 3.8.4 checks passed');
+console.log('KDS visual age 3.8.6 checks passed');

@@ -11,5 +11,5 @@ assert(app.includes("action === 'open-cash-keypad'"));
 assert(css.includes('.ticket-items-scroll'));
 assert(css.includes('.ticket-controls-static'));
 assert(css.includes('.cash-paid-display'));
-assert(release.includes("appVersion: '3.8.4'"));
-console.log('Till cash keypad and fixed controls 3.8.4 checks passed');
+assert(release.includes("appVersion: '3.8.6'"));
+console.log('Till cash keypad and fixed controls 3.8.6 checks passed');

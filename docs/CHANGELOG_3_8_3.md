@@ -1,4 +1,4 @@
-# The Nook ePOS 3.8.4
+# The Nook ePOS 3.8.5
 
 ## Guided Eat In / Takeaway selection
 

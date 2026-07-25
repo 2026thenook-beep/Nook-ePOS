@@ -10,4 +10,4 @@ assert(app.includes('queueTillAddFeedback(state.cart.length - 1);'));
 assert(app.includes('data-cart-index="'));
 assert(css.includes('@keyframes nookCartLineAdded'));
 assert(css.includes('@keyframes nookTicketTotalPulse'));
-console.log('3.8.4 till add feedback verified.');
+console.log('3.8.6 till add feedback verified.');

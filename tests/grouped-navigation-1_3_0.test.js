@@ -10,4 +10,4 @@ assert(app.includes("{ route: 'Kitchen', label: 'Kitchen Ticket Display' }"));
 assert(app.includes("{ route: 'Admin', label: 'Menu Admin' }"));
 assert(css.includes('.nav-group-sales'));
 assert(css.includes('.nav-group-administration'));
-console.log('Grouped navigation 3.8.4 checks passed');
+console.log('Grouped navigation 3.8.6 checks passed');

@@ -1,0 +1,12 @@
+const assert = require('assert');
+const fs = require('fs');
+const app = fs.readFileSync('js/app.js', 'utf8');
+assert(app.includes("orderTypeSelectedForEmptyOrder: false"));
+assert(app.includes('function resetCurrentOrderState(options)'));
+assert(app.includes('function normaliseEmptyOrderState()'));
+assert(app.includes('normaliseEmptyOrderState();'));
+assert(app.includes("if (!state.cart.length) resetCurrentOrderState({ keepServerName: true });"));
+assert(app.includes("if (action === 'clear-cart') { resetCurrentOrderState({ keepServerName: true });"));
+assert(app.includes("state.orderTypeSelectedForEmptyOrder = state.cart.length === 0;"));
+assert(app.includes("state.orderTypeSelectedForEmptyOrder = false;\n      queueTillAddFeedback"));
+console.log('3.8.6 order state lifecycle verified.');

@@ -9,4 +9,4 @@ assert(app.includes('function addOnUsesVariableQuantity(addOn)'));
 assert(css.includes('.kitchen-ticket .addon-list'));
 assert(gs.includes('receiptAddOnText_(a, variableMap)'));
 assert(gs.includes("(addOnMap[item.TicketItemID] || []).forEach"));
-console.log('Kitchen ticket readability 3.8.4 checks passed');
+console.log('Kitchen ticket readability 3.8.6 checks passed');

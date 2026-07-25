@@ -5,7 +5,7 @@ const backend = fs.readFileSync('google/Code.gs','utf8');
 const config = fs.readFileSync('js/config.js','utf8');
 const release = fs.readFileSync('js/release.js','utf8');
 const html = fs.readFileSync('index.html','utf8');
-assert(release.includes("appVersion: '3.8.4'"));
+assert(release.includes("appVersion: '3.8.6'"));
 assert(html.includes('id="uiVersion"'));
 assert(app.includes("uiVersionEl.textContent = CONFIG.frontendVersion"));
 assert(app.includes("data-action=\"export-reports\""));

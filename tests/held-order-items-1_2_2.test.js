@@ -7,4 +7,4 @@ assert(app.includes('held-order-line-main'));
 assert(app.includes('line.AddOns || []'));
 assert(app.includes('Note: '));
 assert(css.includes('.held-order-items'));
-console.log('Held order item detail 3.8.4 checks passed');
+console.log('Held order item detail 3.8.6 checks passed');

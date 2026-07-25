@@ -35,12 +35,14 @@
   var SYNC_TICK_INTERVAL_MS = RELEASE.syncTickIntervalMs || 1000;
   var kitchenPollInFlight = false;
   var menuPollInFlight = false;
+  var ticketHistoryPollInFlight = false;
   var lastMenuSignature = '';
   var syncCoordinator = Operations.createPollCoordinator({
     tickIntervalMs: SYNC_TICK_INTERVAL_MS,
     jobs: [
       { name: 'kitchen', intervalMs: KITCHEN_POLL_INTERVAL_MS, enabled: function () { return state.serverReady && isConfiguredUrl() && document.visibilityState !== 'hidden' && kitchenDisplayEnabled() && state.activeTab === 'Kitchen'; }, run: function () { return syncKitchenQueue({ silent: true }); } },
-      { name: 'menu', intervalMs: MENU_POLL_INTERVAL_MS, enabled: function () { return state.serverReady && isConfiguredUrl() && document.visibilityState !== 'hidden'; }, run: syncMenuData }
+      { name: 'menu', intervalMs: MENU_POLL_INTERVAL_MS, enabled: function () { return state.serverReady && isConfiguredUrl() && document.visibilityState !== 'hidden'; }, run: syncMenuData },
+      { name: 'ticket-history', intervalMs: 4000, enabled: function () { return state.serverReady && isConfiguredUrl() && document.visibilityState !== 'hidden' && state.activeTab === 'Live Tickets'; }, run: syncTicketHistoryData }
     ],
     onError: function (name, error) { console.warn(name + ' synchronisation retrying', error); }
   });
@@ -72,6 +74,7 @@
     lastDatabaseRepair: null,
     paymentInProgress: false,
     pendingOrderTypeItemId: '',
+    orderTypeSelectedForEmptyOrder: false,
     awaitingPostPaymentOrderType: false,
     data: Core.clone(window.NOOK_SEED || {}),
     cart: [],
@@ -191,12 +194,18 @@
     return ApiClient.request(action, payload);
   }
 
-  async function bootstrap() {
-    state.serverReady = false;
-    state.data = canUseLocalTestMode() ? Core.clone(window.NOOK_SEED || {}) : emptyData();
-    loadLocal();
-    ensureActiveCategory();
-    render();
+  async function bootstrap(options) {
+    options = options || {};
+    var preserveData = !!options.preserveData && state.serverReady;
+    var previousData = state.data;
+    var previousServerReady = state.serverReady;
+    if (!preserveData) {
+      state.serverReady = false;
+      state.data = canUseLocalTestMode() ? Core.clone(window.NOOK_SEED || {}) : emptyData();
+      loadLocal();
+      ensureActiveCategory();
+      render();
+    }
 
     if (!isConfiguredUrl()) {
       if (canUseLocalTestMode()) {
@@ -237,11 +246,21 @@
       startSyncCoordinator();
       saveConfirmedUrlAfterGoodConnection(versions);
     } catch (err) {
-      state.serverReady = false;
-      state.data = emptyData();
-      state.status = { mode: 'error', read: 'failed', write: 'blocked', backendVersion: '', databaseVersion: '', spreadsheetName: '', spreadsheetId: '', message: 'Server read failed: ' + err.message };
-      stopSyncCoordinator();
-      render();
+      if (preserveData && previousServerReady) {
+        state.serverReady = true;
+        state.data = previousData;
+        state.status.mode = 'warn';
+        state.status.read = 'refresh failed';
+        state.status.write = 'ready';
+        state.status.message = 'Refresh failed — continuing with the last confirmed data: ' + err.message;
+        renderStatus();
+      } else {
+        state.serverReady = false;
+        state.data = emptyData();
+        state.status = { mode: 'error', read: 'failed', write: 'blocked', backendVersion: '', databaseVersion: '', spreadsheetName: '', spreadsheetId: '', message: 'Server read failed: ' + err.message };
+        stopSyncCoordinator();
+        render();
+      }
     }
   }
 
@@ -327,6 +346,29 @@
     }
   }
 
+
+
+  async function syncTicketHistoryData() {
+    if (ticketHistoryPollInFlight || !state.serverReady || !isConfiguredUrl() || state.activeTab !== 'Live Tickets' || document.visibilityState === 'hidden') return;
+    ticketHistoryPollInFlight = true;
+    try {
+      var result = await api('ticketHistorySnapshot', { date: state.historyDate || todayDateString(new Date()) });
+      var incoming = result.data || {};
+      var before = JSON.stringify([state.data.tickets || [], state.data.ticketItems || [], state.data.ticketAddOns || [], state.data.refunds || [], state.data.refundItems || []]);
+      var after = JSON.stringify([incoming.tickets || [], incoming.ticketItems || [], incoming.ticketAddOns || [], incoming.refunds || [], incoming.refundItems || []]);
+      if (before !== after) {
+        mergeTransactionData(incoming);
+        state.focusedRefresh.history.updatedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        state.focusedRefresh.history.error = '';
+        if (state.activeTab === 'Live Tickets') renderLiveTickets();
+      }
+    } catch (err) {
+      state.focusedRefresh.history.error = err.message || String(err);
+      if (state.activeTab === 'Live Tickets') renderStatus();
+    } finally {
+      ticketHistoryPollInFlight = false;
+    }
+  }
 
   function versionDiagnostics(versions) {
     versions = versions || state.status || {};
@@ -713,6 +755,31 @@
     return state.ticketMeta.OrderType === 'Eat in' || state.ticketMeta.OrderType === 'Takeaway';
   }
 
+  function resetCurrentOrderState(options) {
+    options = options || {};
+    state.cart = [];
+    state.pendingOrderTypeItemId = '';
+    state.orderTypeSelectedForEmptyOrder = false;
+    state.pendingPaymentRequestId = '';
+    state.ticketMeta.OrderType = '';
+    state.ticketMeta.TableNumber = '';
+    state.ticketMeta.CustomerName = '';
+    state.ticketMeta.CashPaid = '';
+    state.ticketMeta.StaffDiscountApplied = false;
+    if (!options.keepServerName) state.ticketMeta.ServerName = state.ticketMeta.ServerName || '';
+  }
+
+  function normaliseEmptyOrderState() {
+    if (state.cart.length) {
+      state.orderTypeSelectedForEmptyOrder = false;
+      return;
+    }
+    if (!state.orderTypeSelectedForEmptyOrder) {
+      state.ticketMeta.OrderType = '';
+      state.pendingOrderTypeItemId = '';
+    }
+  }
+
   function showOrderTypePrompt(context, pendingItemId) {
     context = context || 'till';
     state.pendingOrderTypeItemId = pendingItemId || '';
@@ -737,6 +804,7 @@
     var pendingItemId = state.pendingOrderTypeItemId;
     state.pendingOrderTypeItemId = '';
     state.ticketMeta.OrderType = orderType;
+    state.orderTypeSelectedForEmptyOrder = state.cart.length === 0;
     state.pendingPaymentRequestId = '';
     saveLocal();
     Ui.closeModal();
@@ -750,6 +818,7 @@
   }
 
   function requestAddItem(itemId) {
+    normaliseEmptyOrderState();
     if (!hasSelectedOrderType()) {
       showOrderTypePrompt('first-item', itemId);
       return;
@@ -763,6 +832,7 @@
     var prompts = (state.data.prompts || []).filter(function (p) { return p.TriggerItemID === item.ItemID && Core.active(p.Active); }).sort(bySort);
     if (!prompts.length) {
       state.cart.push(Core.makeCartLine(item, [], ''));
+      state.orderTypeSelectedForEmptyOrder = false;
       queueTillAddFeedback(state.cart.length - 1);
       state.pendingPaymentRequestId = '';
       saveLocal();
@@ -840,6 +910,7 @@
     if (!valid) { toast(message); return; }
     var note = ($('promptOrderNote') || {}).value || '';
     state.cart.push(Core.makeCartLine(item, selections, note.trim()));
+    state.orderTypeSelectedForEmptyOrder = false;
     queueTillAddFeedback(state.cart.length - 1);
     state.pendingPaymentRequestId = '';
     closeModal();
@@ -987,13 +1058,7 @@
         throw new Error('Google Script URL is not configured.');
       }
       mergeCommittedTicket(result.data);
-      state.cart = [];
-      state.pendingPaymentRequestId = '';
-      state.ticketMeta.OrderType = '';
-      state.ticketMeta.TableNumber = '';
-      state.ticketMeta.CustomerName = '';
-      state.ticketMeta.CashPaid = '';
-      state.ticketMeta.StaffDiscountApplied = false;
+      resetCurrentOrderState({ keepServerName: true });
       state.paymentInProgress = false;
       state.awaitingPostPaymentOrderType = true;
       state.status.write = 'OK';
@@ -1251,10 +1316,7 @@
       else if (!canUseLocalTestMode()) throw new Error('Google Script URL is not configured.');
       state.data.heldOrders = state.data.heldOrders || [];
       state.data.heldOrders.push(hold);
-      state.cart = [];
-      state.pendingPaymentRequestId = '';
-      state.ticketMeta.CashPaid = '';
-      state.ticketMeta.StaffDiscountApplied = false;
+      resetCurrentOrderState({ keepServerName: true });
       state.status.write = 'OK';
       state.status.message = isConfiguredUrl() ? 'Held order saved to Google Sheets' : 'Held order saved locally for testing only';
       saveLocal();
@@ -1279,6 +1341,7 @@
       else if (!canUseLocalTestMode()) throw new Error('Google Script URL is not configured.');
       var payload = safeJson(held.PayloadJSON);
       state.cart = payload.cart || [];
+      state.orderTypeSelectedForEmptyOrder = false;
       state.pendingPaymentRequestId = '';
       state.ticketMeta = Object.assign(state.ticketMeta, payload.meta || {}, { CashPaid: '' });
       state.data.heldOrders = (state.data.heldOrders || []).filter(function (h) { return h.HoldID !== id; });
@@ -1380,8 +1443,7 @@
       return;
     }
     if (tab === 'Till' && !state.cart.length) {
-      state.ticketMeta.OrderType = '';
-      state.pendingOrderTypeItemId = '';
+      resetCurrentOrderState({ keepServerName: true });
       saveLocal();
     }
     render();
@@ -1567,7 +1629,7 @@
         }
       });
     }
-    $('main').innerHTML = '<section class="panel"><div class="loader-header"><div><h2>Kitchen Ticket Display</h2><div class="help">New tickets load automatically from Google Sheets while this screen is open. Food and drinks are split by the Drink category tick box in Menu Admin. Completed sections stay greyed out on every device after the server confirms the update.</div></div><div class="kitchen-header-actions"><div class="kitchen-open-counts" aria-label="Open kitchen ticket counts"><span class="kitchen-count food"><strong>' + counts.food + '</strong> Open Food</span><span class="kitchen-count drinks"><strong>' + counts.drinks + '</strong> Open Drinks</span></div><button class="secondary" data-action="refresh">Refresh from server</button></div></div>' +
+    $('main').innerHTML = '<section class="panel"><div class="loader-header"><div><h2>Kitchen Ticket Display</h2><div class="help">New tickets load automatically from Google Sheets while this screen is open. Food and drinks are split by the Drink category tick box in Menu Admin. Completed sections stay greyed out on every device after the server confirms the update.</div></div><div class="kitchen-header-actions"><div class="kitchen-open-counts" aria-label="Open kitchen ticket counts"><span class="kitchen-count food"><strong>' + counts.food + '</strong> Open Food</span><span class="kitchen-count drinks"><strong>' + counts.drinks + '</strong> Open Drinks</span></div><button class="secondary" data-action="refresh-kitchen">Refresh from server</button></div></div>' +
       '<div class="kitchen-grid">' + (queue.length ? queue.map(renderKitchenTicket).join('') : '<div class="card">No open kitchen tickets.</div>') + '</div></section>';
     updateKitchenAgeIndicators();
   }
@@ -1780,7 +1842,7 @@
     var totalCats = (state.data.categories || []).length;
     var totalPrompts = (state.data.prompts || []).length;
     $('main').innerHTML = '<section class="panel admin-page"><div class="admin-hero"><div><h2>Menu admin</h2><p class="help">Edit items, categories and item configuration from one cleaner screen. Saves still require Google Sheets confirmation.</p></div><div class="admin-summary"><div><strong>' + activeItems + '</strong><span>active items</span></div><div><strong>' + totalItems + '</strong><span>total items</span></div><div><strong>' + totalCats + '</strong><span>categories</span></div><div><strong>' + totalPrompts + '</strong><span>prompts</span></div></div></div>' +
-      '<div class="admin-tabs"><button class="pill-btn' + (state.adminMode === 'items' ? ' active' : '') + '" data-action="admin-mode" data-mode="items">Menu items</button><button class="pill-btn' + (state.adminMode === 'categories' ? ' active' : '') + '" data-action="admin-mode" data-mode="categories">Categories</button><button class="pill-btn' + (state.adminMode === 'deleted' ? ' active' : '') + '" data-action="admin-mode" data-mode="deleted">Deleted items</button><button class="secondary" data-action="export-menu-items">Download item list</button><button class="secondary" data-action="refresh">Refresh from server</button></div>' +
+      '<div class="admin-tabs"><button class="pill-btn' + (state.adminMode === 'items' ? ' active' : '') + '" data-action="admin-mode" data-mode="items">Menu items</button><button class="pill-btn' + (state.adminMode === 'categories' ? ' active' : '') + '" data-action="admin-mode" data-mode="categories">Categories</button><button class="pill-btn' + (state.adminMode === 'deleted' ? ' active' : '') + '" data-action="admin-mode" data-mode="deleted">Deleted items</button><button class="secondary" data-action="export-menu-items">Download item list</button><button class="secondary" data-action="refresh-kitchen">Refresh from server</button></div>' +
       (state.adminMode === 'categories' ? renderCategoryLoader() : state.adminMode === 'deleted' ? renderDeletedItemsAdmin() : renderItemLoader()) + '</section>';
     if (state.adminMode === 'items') setTimeout(updateConfigurationSaveState, 0);
   }
@@ -2932,7 +2994,13 @@
     }
   }
 
-  async function refresh() { await bootstrap(); toast(state.serverReady ? 'Server refresh complete.' : 'Server refresh failed or is not configured.'); }
+  async function refresh() { await bootstrap({ preserveData: true }); toast(state.serverReady ? 'Server refresh complete.' : 'Server refresh failed or is not configured.'); }
+
+  async function refreshKitchenOnly() {
+    if (!isConfiguredUrl() || !state.serverReady) { toast('Kitchen refresh requires a live server connection.'); return; }
+    await syncKitchenQueue({ silent: false });
+    toast('Kitchen queue refreshed.');
+  }
 
   document.addEventListener('click', async function (event) {
     var tabBtn = event.target.closest('[data-tab]');
@@ -2982,8 +3050,8 @@
     if (action === 'add-item') requestAddItem(id);
     if (action === 'line-minus') { var i = +btn.getAttribute('data-index'); Core.setLineQuantity(state.cart[i], Core.toNumber(state.cart[i].Quantity, 1) - 1); state.pendingPaymentRequestId = ''; saveLocal(); render(); }
     if (action === 'line-plus') { var ip = +btn.getAttribute('data-index'); Core.setLineQuantity(state.cart[ip], Core.toNumber(state.cart[ip].Quantity, 1) + 1); state.pendingPaymentRequestId = ''; saveLocal(); render(); }
-    if (action === 'remove-line') { state.cart.splice(+btn.getAttribute('data-index'), 1); state.pendingPaymentRequestId = ''; saveLocal(); render(); }
-    if (action === 'clear-cart') { state.cart = []; state.pendingPaymentRequestId = ''; state.ticketMeta.OrderType = ''; state.ticketMeta.CashPaid = ''; state.ticketMeta.StaffDiscountApplied = false; saveLocal(); render(); }
+    if (action === 'remove-line') { state.cart.splice(+btn.getAttribute('data-index'), 1); state.pendingPaymentRequestId = ''; if (!state.cart.length) resetCurrentOrderState({ keepServerName: true }); saveLocal(); render(); }
+    if (action === 'clear-cart') { resetCurrentOrderState({ keepServerName: true }); saveLocal(); render(); }
     if (action === 'toggle-staff-discount') { state.ticketMeta.StaffDiscountApplied = !(staffDiscountApplied() && staffDiscountPercent() > 0); state.pendingPaymentRequestId = ''; saveLocal(); render(); }
     if (action === 'toggle-loyalty') { var loyaltyResult = applyLoyaltyToBestEligibleLine(); state.pendingPaymentRequestId = ''; saveLocal(); render(); toast(loyaltyResult.message); }
     if (action === 'open-cash-keypad') openCashKeypad();
@@ -2996,6 +3064,7 @@
     if (action === 'recall-held') recallHeld(id);
     if (action === 'delete-held') deleteHeld(id);
     if (action === 'refresh') refresh();
+    if (action === 'refresh-kitchen') refreshKitchenOnly();
     if (action === 'refresh-reports') refreshReportsData();
     if (action === 'refresh-ticket-history') refreshTicketHistoryData();
     if (action === 'history-today') { state.historyDate = todayDateString(new Date()); renderLiveTickets(); refreshTicketHistoryData(); }

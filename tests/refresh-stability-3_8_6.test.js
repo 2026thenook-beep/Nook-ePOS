@@ -1,0 +1,13 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const release = fs.readFileSync('js/release.js', 'utf8');
+assert(release.includes("appVersion: '3.8.6'"));
+assert(app.includes('async function bootstrap(options)'));
+assert(app.includes('var preserveData = !!options.preserveData && state.serverReady'));
+assert(app.includes("bootstrap({ preserveData: true })"));
+assert(app.includes("data-action=\"refresh-kitchen\""));
+assert(app.includes('async function refreshKitchenOnly()'));
+assert(app.includes("name: 'ticket-history'"));
+assert(app.includes('async function syncTicketHistoryData()'));
+console.log('3.8.6 refresh stability and cross-device ticket sync checks passed.');

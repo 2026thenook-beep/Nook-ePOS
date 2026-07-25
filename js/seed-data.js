@@ -1,8 +1,8 @@
 window.NOOK_SEED = {
   "meta": {
     "AppName": "The Nook ePOS",
-    "FrontendVersion": "3.8.4",
-    "BackendVersion": "3.8.4",
+    "FrontendVersion": "3.8.6",
+    "BackendVersion": "3.8.6",
     "DatabaseVersion": "1.0.6",
     "BuildDate": "2026-07-11",
     "Source": "Clean ePOS build from uploaded feature list"

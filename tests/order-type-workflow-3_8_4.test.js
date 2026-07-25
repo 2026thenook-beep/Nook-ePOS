@@ -11,4 +11,4 @@ assert(app.includes("data-modal-action=\"cancel-order-type\""),'cancel option mi
 assert(app.includes("state.awaitingPostPaymentOrderType = true"),'post-payment trigger missing');
 assert(app.includes("showOrderTypePrompt('post-payment')"),'post-payment popup missing');
 assert(app.includes("state.ticketMeta = Object.assign(state.ticketMeta, payload.meta || {}, { CashPaid: '' })"),'held order metadata must be restored');
-console.log('3.8.4 guided order type workflow verified.');
+console.log('3.8.6 guided order type workflow verified.');

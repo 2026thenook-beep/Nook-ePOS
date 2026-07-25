@@ -5,15 +5,15 @@
  * This script can be bound to a Google Sheet or can create/use a spreadsheet ID stored in Script Properties.
  */
 
-var NOOK_VERSION = '3.8.4';
+var NOOK_VERSION = '3.8.6';
 var NOOK_DATABASE_VERSION = '1.0.6';
 var NOOK_APP_NAME = 'The Nook ePOS';
 
 var SEED_DATA = {
   "meta": {
     "AppName": "The Nook ePOS",
-    "FrontendVersion": "3.8.4",
-    "BackendVersion": "3.8.4",
+    "FrontendVersion": "3.8.6",
+    "BackendVersion": "3.8.6",
     "DatabaseVersion": "1.0.6",
     "BuildDate": "2026-07-11",
     "Source": "Clean ePOS build from uploaded feature list"

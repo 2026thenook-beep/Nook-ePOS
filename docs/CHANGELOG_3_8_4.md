@@ -1,4 +1,4 @@
-# The Nook ePOS 3.8.4
+# The Nook ePOS 3.8.5
 
 ## Till order-type popup fix
 

@@ -10,4 +10,4 @@ assert(app.includes('function pickPrompt(prompt)'), 'dirty snapshot must use can
 assert(app.includes('function pickOption(option)'), 'dirty snapshot must use canonical option fields');
 assert(backend.includes("action === 'saveItemConfiguration'"), 'backend must expose consolidated save action');
 assert(backend.includes('function saveItemConfiguration_(configuration)'), 'backend must save the configuration under one write lock');
-console.log('fast configuration save 3.8.4 checks passed');
+console.log('fast configuration save 3.8.6 checks passed');

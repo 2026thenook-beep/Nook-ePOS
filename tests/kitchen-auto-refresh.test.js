@@ -13,7 +13,7 @@ assert(app.includes('kitchenQueueSignature'), 'queue changes should be detected 
 assert(app.includes('function runSyncCoordinator()'), 'shared synchronisation coordinator missing');
 assert(backend.includes("if (action === 'kitchenSnapshot')"), 'backend should route kitchenSnapshot reads');
 assert(backend.includes("kitchenQueue: rowsToObjects_('KitchenQueue')"), 'snapshot should read the live KitchenQueue sheet');
-assert(release.includes("appVersion: '3.8.4'"), 'frontend version should be 3.8.4');
-assert(release.includes("appVersion: '3.8.4'"), 'backend version should be 3.8.4');
+assert(release.includes("appVersion: '3.8.6'"), 'frontend version should be 3.8.6');
+assert(release.includes("appVersion: '3.8.6'"), 'backend version should be 3.8.6');
 
 console.log('Kitchen auto-refresh tests passed');

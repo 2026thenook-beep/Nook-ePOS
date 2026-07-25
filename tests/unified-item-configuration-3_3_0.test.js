@@ -3,7 +3,7 @@ const assert = require('assert');
 const app = fs.readFileSync('js/app.js', 'utf8');
 const css = fs.readFileSync('css/app.css', 'utf8');
 const build = JSON.parse(fs.readFileSync('build-info.json', 'utf8'));
-assert.strictEqual(build.release, '3.8.4');
+assert.strictEqual(build.release, '3.8.6');
 assert(app.includes('collectAdminItemConfiguration'), 'working configuration collector missing');
 assert(app.includes('captureAdminItemBaseline'), 'authoritative configuration snapshot missing');
 assert(app.includes('adminItemConfigurationDirty'), 'normalised dirty comparison missing');
@@ -16,4 +16,4 @@ assert(app.includes("window.addEventListener('beforeunload'"), 'browser close/re
 assert(css.includes('.item-configuration-savebar'), 'sticky configuration save bar styles missing');
 assert(!app.includes('data-action="save-prompt" data-admin-save="prompt"'), 'scattered prompt save button remains');
 assert(!app.includes('data-action="save-prompt-options"'), 'scattered option save button remains');
-console.log('3.8.4 unified item configuration checks passed.');
+console.log('3.8.6 unified item configuration checks passed.');

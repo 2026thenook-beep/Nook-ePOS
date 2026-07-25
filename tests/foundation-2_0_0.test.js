@@ -8,4 +8,4 @@ assert(foundation.includes('assertReleaseCompatibility'));
 assert(app.includes('Foundation.createApiClient'));
 assert(app.includes('Foundation.createUi'));
 assert(!app.includes('var response = await fetch(url'));
-console.log('3.8.4 foundation checks passed');
+console.log('3.8.6 foundation checks passed');

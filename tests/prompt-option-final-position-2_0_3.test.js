@@ -10,4 +10,4 @@ assert(backend.includes("action === 'savePromptOptionsBatch'"));
 assert(backend.includes('function savePromptOptionsBatch_'));
 assert(backend.includes('merged.Sort = (index + 1) * 10'));
 assert(css.includes('.prompt-option-column-headings'));
-console.log('Prompt option final-position 3.8.4 checks passed');
+console.log('Prompt option final-position 3.8.6 checks passed');

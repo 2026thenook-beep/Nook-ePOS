@@ -71,6 +71,6 @@ Reports and Ticket History now reset to today when opened and fetch only the tra
 The `google/Code.gs` file contains permanently visible manual functions: `authoriseEmailService`, `sendTestEmailToScriptOwner`, `runSystemDiagnostics`, `repairSpreadsheet`, `setupOrRepairDatabase`, and `verifyDatabaseConnection`.
 
 
-## Database repair safety (3.8.4)
+## Database repair safety (3.8.5)
 
 Application startup and server-info checks are read-only. They preview schema differences but never alter the spreadsheet. Use **Settings → Database maintenance → Preview required changes** first, then **Apply additive repair** and confirm. The repair only creates missing sheets, appends missing columns, creates absent settings/default metadata, and updates version metadata. Existing rows and configured values are retained. The Apps Script function `previewSpreadsheetRepair` provides the same no-write preview from the script editor.
