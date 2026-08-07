@@ -9,7 +9,7 @@ assert(app.includes('loyalty-item-card'), 'Loyalty menu items must be visually i
 assert(app.includes('LOYALTY STAMP REMINDER'), 'Checkout must show loyalty stamp reminder');
 assert(app.includes('loyaltyStampQuantity()'), 'Checkout reminder must calculate qualifying quantity');
 assert(css.includes('.loyalty-stamp-reminder'), 'Loyalty reminder must use POS styling');
-assert(release.includes("appVersion: '3.13.20'"), 'Frontend version must be 3.13.18');
-assert(release.includes("appVersion: '3.13.20'"), 'Backend version must be 3.13.18');
+assert(release.includes("appVersion: '3.13.22'"), 'Frontend version must be 3.13.18');
+assert(release.includes("appVersion: '3.13.22'"), 'Backend version must be 3.13.18');
 assert(backend.includes("var NOOK_VERSION = '3.13.18'"), 'Compatible backend must remain 3.13.18');
 console.log('ticket category and loyalty 3.13.18 checks passed');

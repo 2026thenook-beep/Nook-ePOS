@@ -2,7 +2,7 @@ const fs = require('fs');
 const assert = require('assert');
 const app = fs.readFileSync('js/app.js', 'utf8');
 const release = fs.readFileSync('js/release.js', 'utf8');
-assert(release.includes("appVersion: '3.13.20'"));
+assert(release.includes("appVersion: '3.13.22'"));
 assert(app.includes("data-action=\"move-' + kind + '-up\""));
 assert(app.includes("data-action=\"move-' + kind + '-down\""));
 assert(app.includes("function movePrompt(promptId, direction)"));

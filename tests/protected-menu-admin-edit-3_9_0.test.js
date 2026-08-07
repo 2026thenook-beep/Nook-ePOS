@@ -3,7 +3,7 @@ const assert = require('assert');
 const app = fs.readFileSync('js/app.js', 'utf8');
 const css = fs.readFileSync('css/app.css', 'utf8');
 const release = fs.readFileSync('js/release.js', 'utf8');
-assert(release.includes("appVersion: '3.13.20'"));
+assert(release.includes("appVersion: '3.13.22'"));
 assert(app.includes("adminEditMode: 'view'"));
 assert(app.includes("data-action=\"edit-item\""));
 assert(app.includes("Edit complete item"));

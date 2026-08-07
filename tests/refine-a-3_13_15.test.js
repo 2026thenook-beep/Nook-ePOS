@@ -6,7 +6,7 @@ const app=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
 const coord=fs.readFileSync(path.join(root,'js/server-coordinator.js'),'utf8');
 const release=fs.readFileSync(path.join(root,'js/release.js'),'utf8');
 
-assert(release.includes("appVersion: '3.13.20'"));
+assert(release.includes("appVersion: '3.13.22'"));
 assert(coord.includes("if (lane !== 'write') return [0];"));
 assert(coord.includes("return [0, 750, 2000];"));
 assert(coord.includes("Number(err && err.status) === 404"));

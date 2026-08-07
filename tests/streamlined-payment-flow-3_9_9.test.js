@@ -2,7 +2,7 @@ const fs=require('fs'),assert=require('assert');
 const app=fs.readFileSync('js/app.js','utf8');
 const css=fs.readFileSync('css/app.css','utf8');
 const index=fs.readFileSync('index.html','utf8');
-assert(index.includes('id="uiVersion">3.13.20<'));
+assert(index.includes('id="uiVersion">3.13.22<'));
 assert(app.includes("data-action=\"open-payment-method\""));
 assert(app.includes('function openPaymentMethodModal()'));
 assert(app.includes('data-method="Cash"'));

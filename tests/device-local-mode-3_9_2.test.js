@@ -2,7 +2,7 @@ const fs=require('fs'), assert=require('assert');
 const app=fs.readFileSync('js/app.js','utf8');
 const backend=fs.readFileSync('google/Code.gs','utf8');
 const release=fs.readFileSync('js/release.js','utf8');
-assert(release.includes("appVersion: '3.13.20'"));
+assert(release.includes("appVersion: '3.13.22'"));
 assert(app.includes("LOCAL_TICKET_LIMIT = 500"));
 assert(app.includes("consecutiveCoreSyncFailures >= 4"));
 assert(app.includes("delays = [5000, 10000, 20000, 30000, 60000]"));

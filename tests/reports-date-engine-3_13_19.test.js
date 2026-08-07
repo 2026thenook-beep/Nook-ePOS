@@ -15,4 +15,4 @@ assert.strictEqual(p.lastWeekFrom, '2026-07-25');
 p = funcs.reportPeriodDefinition('2026-03-01');
 assert.strictEqual(p.previousFrom, '2026-02-28');
 assert.strictEqual(p.lastWeekFrom, '2026-02-22');
-console.log('3.13.20 report date engine checks passed');
+console.log('3.13.22 report date engine checks passed');

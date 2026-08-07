@@ -2,7 +2,7 @@ const fs = require('fs');
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 const backend = fs.readFileSync('google/Code.gs', 'utf8');
 const build = JSON.parse(fs.readFileSync('build-info.json', 'utf8'));
-assert(build.release === '3.13.20', 'release must be 3.13.18');
+assert(build.release === '3.13.22', 'release must be 3.13.18');
 assert(backend.includes('function writeSheetObjectsIfChanged_'), 'differential batch writer missing');
 assert(backend.includes("changedSheets.push('MenuItems')"), 'MenuItems differential write missing');
 assert(backend.includes("changedSheets.push('Prompts')"), 'Prompts differential write missing');

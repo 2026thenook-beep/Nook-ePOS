@@ -1,19 +1,19 @@
 {
   "appName": "The Nook ePOS",
-  "release": "3.13.20",
-  "frontendVersion": "3.13.20",
+  "release": "3.13.22",
+  "frontendVersion": "3.13.22",
   "backendVersion": "3.13.18",
   "databaseVersion": "1.0.6",
   "releaseType": "frontend-maintenance",
   "behaviouralCompatibility": "3.10.0",
   "versionSource": "build-info.json",
   "architecture": "shared-core-model-presentation-operations",
-  "name": "iPad Till Category Layout Reliability",
+  "name": "Till Modifier Controls and Admin Layout Entry",
   "mergeSource": "3.10.0",
-  "rollbackRelease": "3.13.19",
+  "rollbackRelease": "3.13.21",
   "consolidationReference": "NOOK-PATCH-MERGE-3.10.0-R01",
-  "maintenanceReference": "NOOK-IPAD-CATEGORY-LAYOUT-3.13.20",
-  "version": "3.13.20",
+  "maintenanceReference": "NOOK-TILL-CONTROLS-ADMIN-LAYOUT-3.13.22",
+  "version": "3.13.22",
   "buildDate": "2026-08-07",
-  "notes": "Frontend-only iPad Till layout fix. Category wrapper flex items no longer shrink inside the horizontally scrolling category strip, preventing minimum-width category buttons from overflowing into neighbouring wrappers and visually overlapping. Long category labels wrap inside a bounded button width. Existing compatible Apps Script backends 3.13.16, 3.13.17 and 3.13.18 remain supported; included Code.gs remains 3.13.18 and is unchanged. Database remains 1.0.6."
+  "notes": "Frontend-only Till layout refinement. Loyalty and Staff Discount remain a two-column modifier row above totals but are no longer height-clipped on short iPad viewports. The permanent Edit menu layout launcher is removed from the selling screen and replaced with Edit Till layout in Menu Admin; it opens the Till directly in protected layout-edit mode after unsaved Admin changes are safely handled. Existing compatible Apps Script backends 3.13.16, 3.13.17 and 3.13.18 remain supported; included Code.gs remains 3.13.18 and unchanged. Database remains 1.0.6."
 }

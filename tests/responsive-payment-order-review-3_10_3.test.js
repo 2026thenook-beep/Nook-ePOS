@@ -10,5 +10,5 @@ assert(app.includes('class="payment-action-panel"'), 'dedicated action panel mis
 assert(css.includes('.cash-payment-layout'), 'responsive cash layout missing');
 assert(css.includes('@media (max-width:680px)'), 'small-screen payment breakpoint missing');
 assert(css.includes('.payment-order-review[hidden]'), 'review panel visibility rule missing');
-assert(release.includes("appVersion: '3.13.20'"), 'release version mismatch');
+assert(release.includes("appVersion: '3.13.22'"), 'release version mismatch');
 console.log('responsive payment/order review 3.13.18: PASS');

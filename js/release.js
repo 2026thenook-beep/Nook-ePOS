@@ -1,6 +1,6 @@
 window.NOOK_RELEASE = Object.freeze({
   appName: 'The Nook ePOS',
-  appVersion: '3.13.20',
+  appVersion: '3.13.22',
   databaseVersion: '1.0.6',
   acceptedBackendVersions: Object.freeze(['3.13.18', '3.13.17', '3.13.16']),
   acceptedDatabaseVersions: Object.freeze(['1.0.6']),

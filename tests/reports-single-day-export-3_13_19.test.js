@@ -5,10 +5,10 @@ const release = fs.readFileSync('js/release.js', 'utf8');
 const backend = fs.readFileSync('google/Code.gs', 'utf8');
 const build = JSON.parse(fs.readFileSync('build-info.json', 'utf8'));
 
-assert.strictEqual(build.release, '3.13.20');
-assert.strictEqual(build.frontendVersion, '3.13.20');
+assert.strictEqual(build.release, '3.13.22');
+assert.strictEqual(build.frontendVersion, '3.13.22');
 assert.strictEqual(build.backendVersion, '3.13.18');
-assert(release.includes("appVersion: '3.13.20'"));
+assert(release.includes("appVersion: '3.13.22'"));
 assert(release.includes("acceptedBackendVersions: Object.freeze(['3.13.18', '3.13.17', '3.13.16'])"));
 assert(backend.includes("var NOOK_VERSION = '3.13.18';"), 'frontend-only release must not change Apps Script');
 
@@ -34,4 +34,4 @@ assert(app.includes('state.reportLoadedDate !== selectedDate'), 'export must rej
 assert(app.includes("a.download='nook-report-'+selectedDate+'.csv'"), 'export filename must contain only the selected date');
 assert(app.includes("var rows=[['REPORT DATE',selectedDate]"), 'export must identify selected report date');
 
-console.log('3.13.20 single-day report/export regression checks passed');
+console.log('3.13.22 single-day report/export regression checks passed');

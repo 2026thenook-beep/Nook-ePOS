@@ -7,15 +7,15 @@ const release = fs.readFileSync('js/release.js', 'utf8');
 const backend = fs.readFileSync('google/Code.gs', 'utf8');
 const build = JSON.parse(fs.readFileSync('build-info.json', 'utf8'));
 
-assert.strictEqual(build.release, '3.13.20');
-assert.strictEqual(build.frontendVersion, '3.13.20');
+assert.strictEqual(build.release, '3.13.22');
+assert.strictEqual(build.frontendVersion, '3.13.22');
 assert.strictEqual(build.backendVersion, '3.13.18');
 assert.strictEqual(build.mergeSource, '3.10.0');
 assert.strictEqual(build.consolidationReference, 'NOOK-PATCH-MERGE-3.10.0-R01');
-assert.match(release, /appVersion:\s*'3\.13\.20'/);
+assert.match(release, /appVersion:\s*'3\.13\.22'/);
 assert.match(backend, /3\.13\.18/);
-assert.match(index, /app\.css\?v=3\.13\.20/);
-assert.match(index, /app\.js\?v=3\.13\.20/);
+assert.match(index, /app\.css\?v=3\.13\.22/);
+assert.match(index, /app\.js\?v=3\.13\.22/);
 
 // Automatic post-payment prompting must use the guarded scheduler, never a direct modal call.
 assert.match(app, /scheduleOrderTypePrompt\('post-payment'\)/);

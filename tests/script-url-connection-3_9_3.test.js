@@ -4,7 +4,7 @@ const app = fs.readFileSync('js/app.js','utf8');
 const foundation = fs.readFileSync('js/foundation.js','utf8');
 const backend = fs.readFileSync('google/Code.gs','utf8');
 const release = fs.readFileSync('js/release.js','utf8');
-assert(release.includes("appVersion: '3.13.20'"));
+assert(release.includes("appVersion: '3.13.22'"));
 assert(app.includes("api('connectionCheck')"), 'URL save must use a lightweight connection check');
 assert(app.includes('longReadTimeoutMs: 45000'), 'Long reads must allow Apps Script cold starts');
 assert(foundation.includes("isLongRead"), 'API client must distinguish long reads');

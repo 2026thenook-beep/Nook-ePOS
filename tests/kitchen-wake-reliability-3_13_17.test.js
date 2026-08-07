@@ -11,7 +11,7 @@ const foundation=fs.readFileSync(path.join(root,'js','foundation.js'),'utf8');
 const coordinatorSource=fs.readFileSync(path.join(root,'js','server-coordinator.js'),'utf8');
 
 test('Kitchen polling is disabled while the page is hidden',()=>{
-  assert.match(release,/appVersion: '3\.13\.20'/);
+  assert.match(release,/appVersion: '3\.13\.22'/);
   assert.doesNotMatch(release,/kitchenHiddenPollIntervalMs/);
   const allowed=app.slice(app.indexOf('function kitchenSyncAllowed()'),app.indexOf('function kitchenAdaptivePollInterval()'));
   assert.match(allowed,/document\.visibilityState !== 'hidden'/);

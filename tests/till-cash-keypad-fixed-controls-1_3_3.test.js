@@ -11,5 +11,5 @@ assert(app.includes("action === 'open-payment-method'"));
 assert(css.includes('.ticket-items-scroll'));
 assert(css.includes('.ticket-controls-static'));
 assert(css.includes('.cash-payment-summary'));
-assert(release.includes("appVersion: '3.13.20'"));
+assert(release.includes("appVersion: '3.13.22'"));
 console.log('Till cash keypad and fixed controls 3.13.18 checks passed');

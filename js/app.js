@@ -1666,6 +1666,24 @@
     renderTill();
   }
 
+  async function openTillLayoutFromAdmin() {
+    if (state.cart.length) {
+      toast('Clear or hold the current ticket before editing the Till layout.', 'error');
+      return;
+    }
+    if (!(await guardAdminNavigation())) return;
+    applyPendingMenuIfSafe('Till');
+    uiReadGeneration += 1;
+    state.activeTab = 'Till';
+    setNavExpanded(false);
+    state.tillLayoutBaseline = tillLayoutSnapshot();
+    state.tillLayoutEditMode = true;
+    state.tillLayoutDirty = false;
+    state.tillLayoutDrag = null;
+    render();
+    updateKitchenPolling();
+  }
+
   async function cancelTillLayoutEditMode() {
     if (state.tillLayoutDirty) {
       var discard = await themedConfirm({ title: 'Discard Till layout changes?', message: 'The categories and item buttons will return to their last saved positions.', confirmLabel: 'Discard changes', cancelLabel: 'Continue editing', tone: 'danger' });
@@ -1761,7 +1779,7 @@
     var editing = state.tillLayoutEditMode;
     var editorBar = editing
       ? '<div class="till-layout-editor-bar"><div><strong>Edit Till layout</strong><span>Drag buttons, or use the arrows. Select a category to arrange its items.</span></div><div class="row"><button class="ghost" data-action="cancel-till-layout">Cancel</button><button class="primary" data-action="save-till-layout"' + (state.tillLayoutDirty ? '' : ' disabled') + '>Save layout</button></div></div>'
-      : '<div class="till-layout-launch"><button class="secondary compact" data-action="edit-till-layout">Edit menu layout</button></div>';
+      : '';
     $('main').innerHTML = (pendingMenuData && !editing ? '<div class="till-update-banner"><strong>Menu update available</strong><span>The current Till stays unchanged until staff apply it.</span><button class="primary compact" data-action="force-till-update">Force Till update</button></div>' : '') +
       editorBar + '<div class="grid-till' + (editing ? ' till-layout-editing' : '') + '">' +
       '<section class="panel till-menu-panel">' +
@@ -1773,9 +1791,11 @@
         '<div class="item-grid-scroll"><div class="item-grid">' + items.map(function (item, index) {
           var moveControls = editing ? '<span class="item-layout-controls"><button type="button" data-action="move-layout-item" data-id="' + attr(item.ItemID) + '" data-direction="-1"' + (index === 0 ? ' disabled' : '') + '>←</button><span class="drag-handle">↕</span><button type="button" data-action="move-layout-item" data-id="' + attr(item.ItemID) + '" data-direction="1"' + (index === items.length - 1 ? ' disabled' : '') + '>→</button></span>' : '';
           return '<div class="layout-item-wrap"' + (editing ? ' draggable="true" data-layout-type="item" data-layout-id="' + attr(item.ItemID) + '"' : '') + '><button class="item-card' + (Core.truthy(item.LoyaltyEligible) ? ' loyalty-item-card' : '') + (editing ? ' layout-item-card' : '') + '" ' + (editing ? 'data-action="select-layout-item"' : 'data-action="add-item"') + ' data-id="' + attr(item.ItemID) + '">' +
-            (Core.truthy(item.LoyaltyEligible) ? '<span class="loyalty-menu-badge">LOYALTY</span>' : '') +
-            '<span><span class="item-name">' + escapeHtml(item.ItemName) + '</span>' +
-            (item.Description ? '<span class="item-desc">' + escapeHtml(item.Description) + '</span>' : '') + '</span>' +
+            '<span class="item-card-copy">' +
+              (Core.truthy(item.LoyaltyEligible) ? '<span class="loyalty-menu-badge">LOYALTY</span>' : '') +
+              '<span class="item-name">' + escapeHtml(item.ItemName) + '</span>' +
+              (item.Description ? '<span class="item-desc">' + escapeHtml(item.Description) + '</span>' : '') +
+            '</span>' +
             '<span class="item-price">' + Core.money(item.Price) + '</span>' +
           '</button>' + moveControls + '</div>';
         }).join('') + '</div></div>' +
@@ -3518,7 +3538,7 @@
     var editLabel = state.adminEditMode === 'item' ? 'Editing complete item' : state.adminEditMode === 'category' ? 'Editing category' : state.adminEditMode === 'saving' ? 'Saving changes' : state.adminEditMode === 'reloading' ? 'Reloading confirmed data' : 'View mode';
     $('main').innerHTML = '<section class="panel admin-page"><div class="admin-hero"><div><h2>Menu admin</h2><p class="help">View mode receives validated server updates. Edit mode protects the whole item, including prompts, options and arrangement, until Save or Cancel.</p></div><div class="admin-summary"><div><strong>' + activeItems + '</strong><span>active items</span></div><div><strong>' + totalItems + '</strong><span>total items</span></div><div><strong>' + totalCats + '</strong><span>categories</span></div><div><strong>' + totalPrompts + '</strong><span>prompts</span></div></div></div>' +
       '<div class="admin-edit-status ' + (state.adminEditMode === 'view' ? 'view' : 'protected') + '"><strong>' + editLabel + '</strong><span>' + (state.adminEditMode === 'view' ? 'Automatic Menu Admin refresh is available.' : 'Menu Admin refresh application is paused; live sales and Kitchen synchronisation continue.') + '</span></div>' +
-      '<div class="admin-tabs"><button class="pill-btn' + (state.adminMode === 'items' ? ' active' : '') + '" data-action="admin-mode" data-mode="items">Menu items</button><button class="pill-btn' + (state.adminMode === 'categories' ? ' active' : '') + '" data-action="admin-mode" data-mode="categories">Categories</button><button class="pill-btn' + (state.adminMode === 'deleted' ? ' active' : '') + '" data-action="admin-mode" data-mode="deleted">Deleted items</button><button class="secondary" data-action="export-menu-items">Download item list</button><button class="secondary" data-action="refresh-admin"' + (state.adminEditMode === 'view' ? '' : ' disabled') + '>Reload from server</button></div>' +
+      '<div class="admin-tabs"><button class="pill-btn' + (state.adminMode === 'items' ? ' active' : '') + '" data-action="admin-mode" data-mode="items">Menu items</button><button class="pill-btn' + (state.adminMode === 'categories' ? ' active' : '') + '" data-action="admin-mode" data-mode="categories">Categories</button><button class="pill-btn' + (state.adminMode === 'deleted' ? ' active' : '') + '" data-action="admin-mode" data-mode="deleted">Deleted items</button><button class="secondary" data-action="edit-till-layout-from-admin">Edit Till layout</button><button class="secondary" data-action="export-menu-items">Download item list</button><button class="secondary" data-action="refresh-admin"' + (state.adminEditMode === 'view' ? '' : ' disabled') + '>Reload from server</button></div>' +
       (state.adminMode === 'categories' ? renderCategoryLoader() : state.adminMode === 'deleted' ? renderDeletedItemsAdmin() : renderItemLoader()) + '</section>';
     if (state.adminMode === 'items') setTimeout(updateConfigurationSaveState, 0);
   }
@@ -4998,6 +5018,7 @@
     var id = btn.getAttribute('data-id');
     if (action === 'set-category') { state.activeCategoryId = id; render(); }
     if (action === 'edit-till-layout') { enterTillLayoutEditMode(); return; }
+    if (action === 'edit-till-layout-from-admin') { await openTillLayoutFromAdmin(); return; }
     if (action === 'cancel-till-layout') { await cancelTillLayoutEditMode(); return; }
     if (action === 'save-till-layout') { await saveTillLayoutArrangement(); return; }
     if (action === 'move-layout-category') { moveTillLayoutEntry('category', id, Number(btn.getAttribute('data-direction'))); return; }

@@ -90,8 +90,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .item-grid { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 10px; }
 .item-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 15px; padding: 15px 12px; min-height: 107px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; text-align: left; }
 .item-card:active { transform: translateY(1px); }
-.item-name { font-weight: 950; font-size: 16px; line-height: 1.2; }
-.item-desc { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.item-card-copy { display:flex; flex-direction:column; align-items:flex-start; min-width:0; width:100%; }
+.item-name { display:block; width:100%; font-weight:950; font-size:16px; line-height:1.2; overflow-wrap:anywhere; }
+.item-desc { display:block; width:100%; color:var(--muted); font-size:12px; line-height:1.3; margin-top:4px; overflow-wrap:anywhere; }
 .item-price { color: var(--green); font-weight: 950; font-size: 20px; margin-top: 10px; }
 
 .ticket-panel { position: sticky; top: 148px; }
@@ -513,7 +514,7 @@ button:disabled { opacity: .62; cursor: wait; }
 /* 1.1.7 ticket category and loyalty visibility */
 .item-card { position: relative; }
 .item-card.loyalty-item-card { border: 2px solid #d9b44a; background: #fffaf0; }
-.loyalty-menu-badge { position: absolute; top: 7px; right: 7px; border-radius: 999px; padding: 4px 7px; background: #50390a; color: #fff; font-size: 10px; font-weight: 950; letter-spacing: .05em; }
+.loyalty-menu-badge { position:static; display:inline-flex; align-self:flex-start; max-width:100%; margin:0 0 7px; border-radius:999px; padding:4px 7px; background:#50390a; color:#fff; font-size:10px; line-height:1; font-weight:950; letter-spacing:.05em; white-space:nowrap; }
 .ticket-category { display: inline-block; margin-top: 4px; border-radius: 999px; padding: 3px 8px; background: #eef2f5; color: #46535d; font-size: 11px; font-weight: 850; }
 .cart-line.loyalty-eligible-line { border-left: 5px solid #d9b44a; }
 .loyalty-stamp-reminder { margin: 10px 0 14px; padding: 14px; border: 2px solid #d9b44a; border-radius: 14px; background: #fff7dd; color: #50390a; display: flex; flex-direction: column; gap: 5px; }
@@ -1186,9 +1187,35 @@ button:disabled { opacity: .62; cursor: wait; }
 /* 3.13.20 iPad Till category strip: wrappers must never shrink below their button width. */
 @media (max-width:1180px){.category-strip>.layout-category-wrap{flex:0 0 auto}.category-strip>.layout-category-wrap>.pill-btn{display:block;max-width:180px;overflow-wrap:anywhere}}
 
+/* 3.13.21 Till item-card hierarchy: loyalty badge in flow, name above description. */
+@media (max-width:1180px){.item-card-copy{gap:0}.loyalty-menu-badge{margin-bottom:6px;font-size:9px;padding:3px 6px}.item-desc{font-size:11px;line-height:1.28}.item-card.loyalty-item-card{padding-top:9px}}
+
 
 /* 3.13.6 device maintenance workflows */
 .maintenance-actions-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:12px 0 16px; }
 .maintenance-action-card { display:flex; flex-direction:column; gap:10px; align-items:stretch; }
 .maintenance-action-card button { margin-top:auto; min-height:48px; }
 @media (max-width:900px) { .maintenance-actions-grid { grid-template-columns:1fr; } }
+
+
+/* 3.13.22 Till modifier controls and Menu Admin layout-entry refinement. */
+.ticket-secondary-controls {
+  flex: 0 0 auto;
+  max-height: none;
+  overflow: visible;
+  align-items: stretch;
+}
+.ticket-secondary-controls > .loyalty-btn,
+.ticket-secondary-controls > .staff-discount-btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+}
+@media (max-height: 760px) and (min-width: 701px) {
+  .ticket-secondary-controls { max-height: none; overflow: visible; }
+  .ticket-secondary-controls > .loyalty-btn,
+  .ticket-secondary-controls > .staff-discount-btn { min-height: 44px; padding: 9px 10px; font-size: 13px; }
+}
+@media (max-width: 430px) {
+  .ticket-secondary-controls { max-height: none; overflow: visible; }
+}
