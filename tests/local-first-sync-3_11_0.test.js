@@ -10,5 +10,5 @@ assert(app.includes('await storeLocalPaidTicket(payload, previewBundle)'));
 assert(qm.includes("indexedDB.open(DB_NAME, DB_VERSION)"));
 assert(app.includes('Payment secured locally — synchronising in background'));
 assert(!app.includes('Wait for the server confirmation'));
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 console.log('local-first sync 3.13.18 tests passed');

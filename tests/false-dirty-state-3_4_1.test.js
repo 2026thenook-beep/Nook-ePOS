@@ -3,7 +3,7 @@ const assert = require('assert');
 const app = fs.readFileSync('js/app.js', 'utf8');
 const build = JSON.parse(fs.readFileSync('build-info.json', 'utf8'));
 
-assert.strictEqual(build.release, '3.13.19');
+assert.strictEqual(build.release, '3.13.20');
 assert(!/CategoryName:\s*text\(item\.CategoryName\)/.test(app), 'derived CategoryName must not participate in dirty comparison');
 assert(app.includes("option.Active = Object.prototype.hasOwnProperty.call(option, 'Active') ? Core.truthy(option.Active) : true;"), 'explicit option Active state must be collected without creating false dirty state');
 assert(app.includes('state.dirtyPromptOptions = {};') && app.includes('state.promptOptionOriginals = {};'), 'legacy option dirty state must be reset with authoritative baseline');

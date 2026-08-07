@@ -7,5 +7,5 @@ assert(app.includes("key: 'KitchenDisplayEnabled'"));
 assert(app.includes('if (!kitchenDisplayEnabled()'));
 assert(gs.includes("getSetting_('KitchenDisplayEnabled')"));
 assert(gs.includes('if (kitchenEnabled)'));
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 console.log('Kitchen display toggle 3.13.18 checks passed');

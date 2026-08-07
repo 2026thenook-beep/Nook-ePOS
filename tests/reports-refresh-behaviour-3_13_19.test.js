@@ -78,5 +78,5 @@ function makeHarness(apiImpl) {
     {fromDate:'2026-07-28',toDate:'2026-07-28'}
   ]);
   assert.strictEqual(h2.state.reportLoadedDate,'2026-08-04');
-  console.log('3.13.19 report refresh behavioural checks passed');
+  console.log('3.13.20 report refresh behavioural checks passed');
 })().catch(err => { console.error(err); process.exit(1); });

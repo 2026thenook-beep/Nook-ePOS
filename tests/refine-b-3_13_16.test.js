@@ -7,11 +7,11 @@ const app=fs.readFileSync(path.join(root,'js','app.js'),'utf8');
 const release=fs.readFileSync(path.join(root,'js','release.js'),'utf8');
 const build=JSON.parse(fs.readFileSync(path.join(root,'build-info.json'),'utf8'));
 
-assert.strictEqual(build.release,'3.13.19');
-assert.strictEqual(build.frontendVersion,'3.13.19');
+assert.strictEqual(build.release,'3.13.20');
+assert.strictEqual(build.frontendVersion,'3.13.20');
 assert.strictEqual(build.backendVersion,'3.13.18');
 assert.strictEqual(build.databaseVersion,'1.0.6');
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 assert(release.includes("acceptedBackendVersions: Object.freeze(['3.13.18', '3.13.17', '3.13.16'])"));
 assert(code.includes("var NOOK_VERSION = '3.13.18';"));
 

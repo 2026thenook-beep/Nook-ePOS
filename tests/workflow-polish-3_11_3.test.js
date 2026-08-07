@@ -2,7 +2,7 @@ const fs=require('fs'), assert=require('assert');
 const app=fs.readFileSync('js/app.js','utf8');
 const css=fs.readFileSync('css/app.css','utf8');
 const release=fs.readFileSync('js/release.js','utf8');
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 assert(app.includes('activeReceiptBundle = { ticket: ticket'));
 assert(app.includes("clientRequestId: String(clientRequestId || '')"));
 assert(app.includes("transactionRow.syncStatus !== 'SYNCED'"));

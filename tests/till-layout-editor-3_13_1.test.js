@@ -6,7 +6,7 @@ const backend = fs.readFileSync('google/Code.gs','utf8');
 const coordinator = fs.readFileSync('js/server-coordinator.js','utf8');
 const foundation = fs.readFileSync('js/foundation.js','utf8');
 const release = fs.readFileSync('js/release.js','utf8');
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 assert(app.includes('Edit menu layout'));
 assert(app.includes('tillLayoutEditMode'));
 assert(app.includes('data-layout-type="category"'));

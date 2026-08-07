@@ -8,7 +8,7 @@ const coord = fs.readFileSync('js/server-coordinator.js','utf8');
 const release = fs.readFileSync('js/release.js','utf8');
 
 test('3.13.18 declares foreground adaptive kitchen intervals', () => {
-  assert.match(release, /appVersion: '3\.13\.19'/);
+  assert.match(release, /appVersion: '3\.13\.20'/);
   assert.match(release, /kitchenPollIntervalMs: 1500/);
   assert.match(release, /kitchenNormalPollIntervalMs: 3000/);
   assert.match(release, /kitchenQuietPollIntervalMs: 5000/);

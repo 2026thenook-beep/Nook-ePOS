@@ -3,7 +3,7 @@ const assert = require('assert');
 const app = fs.readFileSync('js/app.js','utf8');
 const css = fs.readFileSync('css/app.css','utf8');
 const index = fs.readFileSync('index.html','utf8');
-assert(index.includes('id="uiVersion">3.13.19<'));
+assert(index.includes('id="uiVersion">3.13.20<'));
 assert(!css.includes('@media (max-width: 1180px) {\n  #appShell') || css.includes('.brand-version { display:block; font-size:14px'));
 assert(css.includes('.nav-drawer {\n  position:absolute;'));
 assert(css.includes('.nav-drawer { position:fixed; top:62px'));

@@ -2,7 +2,7 @@ const fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.join(__dirname,'..');
 const app=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
 const release=fs.readFileSync(path.join(root,'js/release.js'),'utf8');
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 assert(app.includes('var WAKE_RECOVERY_WATCHDOG_MS = 12000'));
 assert(app.includes('var wakeRecoveryGeneration = 0'));
 assert(app.includes('async function runWakeConsistencyCheck(generation)'));

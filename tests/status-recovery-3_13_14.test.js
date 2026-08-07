@@ -5,7 +5,7 @@ const root = path.resolve(__dirname, '..');
 const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
 const release = fs.readFileSync(path.join(root, 'js/release.js'), 'utf8');
 
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 assert(app.includes('var activeSyncFaults = Object.create(null);'));
 assert(app.includes('function markSyncFault(name, error)'));
 assert(app.includes('function clearSyncFault(name)'));

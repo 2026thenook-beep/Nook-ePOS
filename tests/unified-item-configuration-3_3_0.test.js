@@ -3,7 +3,7 @@ const assert = require('assert');
 const app = fs.readFileSync('js/app.js', 'utf8');
 const css = fs.readFileSync('css/app.css', 'utf8');
 const build = JSON.parse(fs.readFileSync('build-info.json', 'utf8'));
-assert.strictEqual(build.release, '3.13.19');
+assert.strictEqual(build.release, '3.13.20');
 assert(app.includes('collectAdminItemConfiguration'), 'working configuration collector missing');
 assert(app.includes('captureAdminItemBaseline'), 'authoritative configuration snapshot missing');
 assert(app.includes('adminItemConfigurationDirty'), 'normalised dirty comparison missing');

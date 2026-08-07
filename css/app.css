@@ -1177,11 +1177,14 @@ button:disabled { opacity: .62; cursor: wait; }
 .till-layout-editor-bar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:0 0 10px;padding:12px 14px;border:2px solid #b7791f;border-radius:14px;background:#fff8e8}
 .till-layout-editor-bar>div:first-child{display:flex;flex-direction:column;gap:3px}.till-layout-editor-bar span{font-size:.9rem;color:#5f4b2c}
 .till-layout-editing .till-menu-panel{outline:3px solid rgba(183,121,31,.2)}
-.layout-category-wrap{display:inline-flex;position:relative;align-items:center}.layout-category-wrap[draggable=true]{cursor:grab;padding-bottom:29px}.layout-category-wrap.active{z-index:2}
+.layout-category-wrap{display:inline-flex;position:relative;align-items:center;flex:0 0 auto;min-width:0}.layout-category-wrap[draggable=true]{cursor:grab;padding-bottom:29px}.layout-category-wrap.active{z-index:2}
 .layout-move-controls{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;gap:4px}.layout-move-controls button,.item-layout-controls button{min-width:30px;height:26px;border:1px solid #c8b999;border-radius:7px;background:#fff;cursor:pointer;font-weight:800}.layout-move-controls button:disabled,.item-layout-controls button:disabled{opacity:.3;cursor:not-allowed}
 .layout-edit-hint{padding:9px 12px;margin:5px 0 10px;border-radius:10px;background:#fff8e8;color:#5f4b2c;font-weight:700}
 .layout-item-wrap{position:relative;min-width:0}.layout-item-wrap[draggable=true]{cursor:grab;padding-bottom:35px}.layout-item-wrap .item-card{width:100%;height:100%}.layout-item-card{pointer-events:auto;border-style:dashed!important}.item-layout-controls{position:absolute;left:6px;right:6px;bottom:3px;display:flex;align-items:center;justify-content:space-between}.drag-handle{font-weight:900;color:#7a5d28}.layout-dragging{opacity:.4}.layout-instructions h2{margin-top:0}
 @media(max-width:760px){.till-layout-editor-bar{align-items:flex-start;flex-direction:column}.till-layout-editor-bar .row{width:100%}.till-layout-editor-bar .row button{flex:1}.layout-category-wrap[draggable=true]{padding-bottom:34px}}
+
+/* 3.13.20 iPad Till category strip: wrappers must never shrink below their button width. */
+@media (max-width:1180px){.category-strip>.layout-category-wrap{flex:0 0 auto}.category-strip>.layout-category-wrap>.pill-btn{display:block;max-width:180px;overflow-wrap:anywhere}}
 
 
 /* 3.13.6 device maintenance workflows */

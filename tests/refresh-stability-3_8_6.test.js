@@ -2,7 +2,7 @@ const fs = require('fs');
 const assert = require('assert');
 const app = fs.readFileSync('js/app.js', 'utf8');
 const release = fs.readFileSync('js/release.js', 'utf8');
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 assert(app.includes('async function bootstrap(options)'));
 assert(app.includes('var preserveData = options.preserveData === true || (options.resetData !== true && hasConfirmedServerData)'));
 assert(app.includes("bootstrap({ preserveData: true })"));

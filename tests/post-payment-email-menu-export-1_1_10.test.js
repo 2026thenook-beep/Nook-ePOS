@@ -8,6 +8,6 @@ assert(app.includes('function exportMenuItemsByCategory()'));
 assert(app.includes('data-action=\"export-menu-items\"'));
 assert(app.includes("if (action === 'export-menu-items') exportMenuItemsByCategory();"));
 assert(app.includes("['Category', 'Item', 'Description', 'Price', 'Active', 'Loyalty eligible', 'Sort order']"));
-assert(rel.includes("appVersion: '3.13.19'")); assert(rel.includes("appVersion: '3.13.19'"));
+assert(rel.includes("appVersion: '3.13.20'")); assert(rel.includes("appVersion: '3.13.20'"));
 assert(back.includes("var NOOK_VERSION = '3.13.18';"));
 console.log('3.13.18 feature tests passed');

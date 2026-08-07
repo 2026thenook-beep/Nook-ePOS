@@ -1,19 +1,19 @@
 {
   "appName": "The Nook ePOS",
-  "release": "3.13.19",
-  "frontendVersion": "3.13.19",
+  "release": "3.13.20",
+  "frontendVersion": "3.13.20",
   "backendVersion": "3.13.18",
   "databaseVersion": "1.0.6",
   "releaseType": "frontend-maintenance",
   "behaviouralCompatibility": "3.10.0",
   "versionSource": "build-info.json",
   "architecture": "shared-core-model-presentation-operations",
-  "name": "Single-Day Reports / Explicit Comparisons",
+  "name": "iPad Till Category Layout Reliability",
   "mergeSource": "3.10.0",
-  "rollbackRelease": "3.13.18",
+  "rollbackRelease": "3.13.19",
   "consolidationReference": "NOOK-PATCH-MERGE-3.10.0-R01",
-  "maintenanceReference": "NOOK-REPORT-DAY-COMPARISON-3.13.19",
-  "version": "3.13.19",
+  "maintenanceReference": "NOOK-IPAD-CATEGORY-LAYOUT-3.13.20",
+  "version": "3.13.20",
   "buildDate": "2026-08-07",
-  "notes": "Frontend-only Reports refinement. Reports now use one selected report date. The selected day, previous day and same weekday last week are requested as three exact one-day reportsSnapshot reads instead of one expanded multi-day window. Comparison panels are explicitly labelled as comparisons. Export is restricted to the selected day and is disabled until that selected day has loaded. Report refresh is latest-date-wins: a date selected while another report refresh is in flight is queued and loaded next rather than discarded. Existing compatible Apps Script backends 3.13.16, 3.13.17 and 3.13.18 remain supported; included Code.gs remains 3.13.18 and is unchanged. Database remains 1.0.6."
+  "notes": "Frontend-only iPad Till layout fix. Category wrapper flex items no longer shrink inside the horizontally scrolling category strip, preventing minimum-width category buttons from overflowing into neighbouring wrappers and visually overlapping. Long category labels wrap inside a bounded button width. Existing compatible Apps Script backends 3.13.16, 3.13.17 and 3.13.18 remain supported; included Code.gs remains 3.13.18 and is unchanged. Database remains 1.0.6."
 }

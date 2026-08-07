@@ -9,5 +9,5 @@ assert(app.includes('data-action="clear-cart">Clear'));
 assert(app.includes('class="ticket-action-footer"'));
 assert(css.includes('.ticket-action-footer'));
 assert(css.includes('flex: 0 0 auto'));
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 console.log('Till Hold/Clear visibility 3.13.18 checks passed');

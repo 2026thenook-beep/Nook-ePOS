@@ -7,6 +7,6 @@ assert(!app.includes('placeholder="Table number" data-field="TableNumber"'), 'Ti
 assert(!app.includes('placeholder="Customer name for receipt" data-field="CustomerName"'), 'Till must not show Customer name field');
 assert(app.includes('id="paymentCustomerName"'), 'Payment prompt must retain customer name input');
 assert(app.includes('id="paymentTableNumber"'), 'Payment prompt must retain table number input');
-assert(release.includes("appVersion: '3.13.19'"), 'Frontend version must be 3.13.18');
-assert(release.includes("appVersion: '3.13.19'"), 'Backend version must be 3.13.18');
+assert(release.includes("appVersion: '3.13.20'"), 'Frontend version must be 3.13.18');
+assert(release.includes("appVersion: '3.13.20'"), 'Backend version must be 3.13.18');
 console.log('till-fields-removed-1_1_5: PASS');

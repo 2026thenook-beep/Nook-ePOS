@@ -1,6 +1,6 @@
 const fs=require('fs'),path=require('path'),assert=require('assert');
 const root=path.join(__dirname,'..'); const app=fs.readFileSync(path.join(root,'js/app.js'),'utf8'); const coord=fs.readFileSync(path.join(root,'js/server-coordinator.js'),'utf8'); const release=fs.readFileSync(path.join(root,'js/release.js'),'utf8');
-assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("appVersion: '3.13.20'"));
 assert(app.includes('Save &amp; Test Script URL'));
 assert(app.includes('data-action="toggle-sync-pause"'));
 assert(app.includes('await beginSyncMaintenance(\'Testing Script URL\')'));
