@@ -5,7 +5,9 @@
     appName: RELEASE.appName || 'The Nook ePOS',
     appVersion: RELEASE.appVersion || 'unknown',
     frontendVersion: RELEASE.appVersion || 'unknown',
-    backendVersion: RELEASE.appVersion || 'unknown',
+    backendVersion: (RELEASE.acceptedBackendVersions && RELEASE.acceptedBackendVersions[0]) || 'unknown',
+    acceptedBackendVersions: (RELEASE.acceptedBackendVersions || []).slice(),
+    acceptedDatabaseVersions: (RELEASE.acceptedDatabaseVersions || [RELEASE.databaseVersion]).slice(),
     databaseVersion: RELEASE.databaseVersion || 'unknown',
 
     // Paste the deployed Google Apps Script Web App URL here after deployment,

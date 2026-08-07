@@ -1,0 +1,10 @@
+const fs=require('fs'); const assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8'); const backend=fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes('var LiveSyncManager'));
+assert(app.includes("name: 'till-live'"));
+assert(app.includes("api('tillLiveSnapshot')"));
+assert(app.includes('Never rebuild the active Till during a sale'));
+assert(app.includes("state.activeTab !== 'Kitchen'"));
+assert(backend.includes("action === 'tillLiveSnapshot'"));
+assert(backend.includes('function tillLiveSnapshotResponse_()'));
+console.log('live sync manager 3.13.18 tests passed');

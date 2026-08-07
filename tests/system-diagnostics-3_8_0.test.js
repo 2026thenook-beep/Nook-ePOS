@@ -9,4 +9,4 @@ assert(app.includes('openPrintDiagnostic'));
 assert(backend.includes("action === 'diagnosticsRun'"));
 assert(backend.includes('function authoriseEmailService()'));
 assert(backend.includes('deleteKeyValue_'));
-console.log('system diagnostics 3.8.6 test passed');
+console.log('system diagnostics 3.13.18 test passed');

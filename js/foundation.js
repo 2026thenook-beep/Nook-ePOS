@@ -21,7 +21,8 @@
   function createApiClient(options) {
     options = options || {};
     return Object.freeze({
-      request: async function (action, payload) {
+      request: async function (action, payload, requestOptions) {
+        requestOptions = requestOptions || {};
         var url = String(options.getUrl() || '').trim();
         if (!url || /PASTE_YOUR_DEPLOYED/i.test(url)) throw new Error('Google Script URL is not configured.');
         var request = Object.assign({}, payload || {}, {
@@ -29,12 +30,63 @@
           client: 'browser',
           frontendVersion: options.frontendVersion || 'unknown'
         });
-        var response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(request)
-        });
-        if (!response.ok) throw new Error('Server returned HTTP ' + response.status);
+        var criticalWriteActions = ['commitTicket','holdOrder','deleteHeldOrder','kitchenUpdate','refundTicket','saveCategory','saveItem','saveItemConfiguration','saveItemConfigurationPatch','savePrompt','savePromptOption','savePromptOptionsBatch','copyItemPrompts','archiveDeleteEntity','saveSetting','saveConfirmedUrl','clearReports'];
+        var longReadActions = options.longReadActions || ['bootstrap','serverInfo','connectionCheck','previewDatabaseRepair','diagnosticsRun'];
+        var isCriticalWrite = criticalWriteActions.indexOf(action) >= 0;
+        var isLongRead = longReadActions.indexOf(action) >= 0;
+        var timeoutMs = isCriticalWrite
+          ? (Number(options.writeTimeoutMs) || 30000)
+          : isLongRead
+            ? (Number(options.longReadTimeoutMs) || 45000)
+            : (Number(options.readTimeoutMs) || 10000);
+        var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var externalSignal = requestOptions.signal || null;
+        var externallyAborted = !!(externalSignal && externalSignal.aborted);
+        var externalAbortHandler = null;
+        if (externallyAborted) {
+          var alreadyCancelled = new Error('Server read was cancelled because browser state changed.');
+          alreadyCancelled.code = 'REQUEST_ABORTED';
+          alreadyCancelled.action = action;
+          throw alreadyCancelled;
+        }
+        if (controller && externalSignal && typeof externalSignal.addEventListener === 'function') {
+          externalAbortHandler = function () { externallyAborted = true; controller.abort(); };
+          externalSignal.addEventListener('abort', externalAbortHandler, { once: true });
+        }
+        var timeout = controller ? setTimeout(function () { controller.abort(); }, timeoutMs) : null;
+        var response;
+        try {
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(request),
+            signal: controller ? controller.signal : (externalSignal || undefined)
+          });
+        } catch (err) {
+          if (err && err.name === 'AbortError') {
+            if (externallyAborted || (externalSignal && externalSignal.aborted)) {
+              var cancelledError = new Error('Server read was cancelled because browser state changed.');
+              cancelledError.code = 'REQUEST_ABORTED';
+              cancelledError.action = action;
+              throw cancelledError;
+            }
+            var timeoutError = new Error('Server request timed out after ' + Math.round(timeoutMs / 1000) + ' seconds.');
+            timeoutError.code = 'REQUEST_TIMEOUT';
+            timeoutError.action = action;
+            throw timeoutError;
+          }
+          throw err;
+        } finally {
+          if (timeout) clearTimeout(timeout);
+          if (externalAbortHandler && externalSignal && typeof externalSignal.removeEventListener === 'function') externalSignal.removeEventListener('abort', externalAbortHandler);
+        }
+        if (!response.ok) {
+          var httpError = new Error('Server returned HTTP ' + response.status);
+          httpError.status = response.status;
+          httpError.code = 'HTTP_' + response.status;
+          httpError.action = action;
+          throw httpError;
+        }
         var json = await response.json();
         if (!json.ok) throw new Error(json.error || 'Server returned an error.');
         return json;
@@ -110,14 +162,18 @@
   function assertReleaseCompatibility(release, backendVersions) {
     release = release || {};
     backendVersions = backendVersions || {};
-    var expectedBackend = release.backendVersion || release.frontendVersion || '';
-    var expectedDatabase = release.databaseVersion || '';
+    var acceptedBackends = (release.acceptedBackendVersions || [release.backendVersion || release.frontendVersion || '']).map(String);
+    var acceptedDatabases = (release.acceptedDatabaseVersions || [release.databaseVersion || '']).map(String);
+    var actualBackend = String(backendVersions.BackendVersion || '');
+    var actualDatabase = String(backendVersions.DatabaseVersion || '');
     return {
-      ok: String(backendVersions.BackendVersion || '') === String(expectedBackend) && String(backendVersions.DatabaseVersion || '') === String(expectedDatabase),
-      expectedBackend: expectedBackend,
-      actualBackend: backendVersions.BackendVersion || '',
-      expectedDatabase: expectedDatabase,
-      actualDatabase: backendVersions.DatabaseVersion || ''
+      ok: acceptedBackends.indexOf(actualBackend) >= 0 && acceptedDatabases.indexOf(actualDatabase) >= 0,
+      expectedBackend: acceptedBackends.join(', '),
+      acceptedBackends: acceptedBackends,
+      actualBackend: actualBackend,
+      expectedDatabase: acceptedDatabases.join(', '),
+      acceptedDatabases: acceptedDatabases,
+      actualDatabase: actualDatabase
     };
   }
 

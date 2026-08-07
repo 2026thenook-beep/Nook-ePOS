@@ -1,0 +1,15 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const queue=fs.readFileSync('js/queue-manager.js','utf8');
+assert(queue.includes("var DAILY_STORE = 'dailyTickets'"));
+assert(queue.includes('dailyAll: dailyAll'));
+assert(queue.includes('dailyPut: dailyPut'));
+assert(app.includes('refreshDailyLocalTickets'));
+assert(app.includes('saveDailyTicketRecord'));
+assert(app.includes('mergedLiveTicketRows'));
+assert(app.includes('Local — waiting to sync'));
+assert(app.includes('Local copy — server confirmed'));
+assert(app.includes('exportDailyTicketBackup'));
+assert(app.includes("await saveDailyTicketRecord(record)"));
+assert(app.includes("await saveDailyTicketRecord(row)"));
+console.log('3.13.18 daily local ticket redundancy checks passed');

@@ -1,0 +1,11 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const queue = fs.readFileSync('js/queue-manager.js','utf8');
+assert(app.includes('48 * 60 * 60 * 1000'));
+assert(app.includes("rows[i].syncStatus === 'SYNCED' && expired"));
+assert(app.includes('await QueueManager.removeTicketCopies(rows[i].clientRequestId)'));
+assert(queue.includes('async function removeTicketCopies(clientRequestId)'));
+assert(queue.includes('removeTicketCopies: removeTicketCopies'));
+assert(queue.includes("db.transaction([STORE, DAILY_STORE], 'readwrite')"));
+console.log('3.13.18 48-hour local ticket retention checks passed');

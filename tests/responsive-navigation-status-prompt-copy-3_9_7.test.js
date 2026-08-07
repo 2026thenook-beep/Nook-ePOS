@@ -1,0 +1,14 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const css = fs.readFileSync('css/app.css','utf8');
+assert(app.includes("NAV_AUTO_COLLAPSE_MS = 12000"));
+assert(app.includes("data-action=\"toggle-main-menu\""));
+assert(app.includes("setNavExpanded(false)"));
+assert(app.includes("recoverStatusIfHealthy"));
+assert(app.includes("itemConfigurationSnapshot', { itemId: sourceItemId }"));
+assert(app.includes("itemConfigurationSnapshot', { itemId: targetItemId }"));
+assert(css.includes('.topnav.collapsed .nav-drawer'));
+assert(css.includes('@media (max-width: 780px)'));
+assert(css.includes('position:sticky; bottom:0'));
+console.log('3.13.18 responsive navigation/status/prompt-copy checks passed');

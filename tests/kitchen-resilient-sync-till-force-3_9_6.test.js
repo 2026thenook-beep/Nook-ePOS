@@ -1,0 +1,12 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const backend=fs.readFileSync('google/Code.gs','utf8');
+assert(app.includes('kitchenDeferredUpdates'), 'deferred kitchen state missing');
+assert(app.includes('retryDeferredKitchenUpdates'), 'automatic kitchen retry missing');
+assert(app.includes("data-action=\"reopen-kitchen\""), 'full ticket reopen button missing');
+assert(app.includes("state.kitchenDeferredUpdates[id] = { completeAll: true }"), 'failed completion must remain locally closed');
+assert(app.includes("data-action=\"force-till-update\""), 'force Till update control missing');
+assert(app.includes('without clearing the current basket'), 'Till update basket protection missing');
+assert(backend.includes('request.ReopenAll'), 'backend full reopen support missing');
+assert(app.includes("state.status.message = 'Ready'"), 'recovery status clearing missing');
+console.log('3.13.18 resilient Kitchen and Till update checks passed');

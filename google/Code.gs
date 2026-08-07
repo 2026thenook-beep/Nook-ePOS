@@ -5,15 +5,15 @@
  * This script can be bound to a Google Sheet or can create/use a spreadsheet ID stored in Script Properties.
  */
 
-var NOOK_VERSION = '3.8.6';
+var NOOK_VERSION = '3.13.18';
 var NOOK_DATABASE_VERSION = '1.0.6';
 var NOOK_APP_NAME = 'The Nook ePOS';
 
 var SEED_DATA = {
   "meta": {
     "AppName": "The Nook ePOS",
-    "FrontendVersion": "3.8.6",
-    "BackendVersion": "3.8.6",
+    "FrontendVersion": "3.13.18",
+    "BackendVersion": "3.13.18",
     "DatabaseVersion": "1.0.6",
     "BuildDate": "2026-07-11",
     "Source": "Clean ePOS build from uploaded feature list"
@@ -2043,6 +2043,7 @@ var LIST_SHEETS = {
  * easy to verify that the correct deployment is live.
  */
 function doGet(e) {
+  resetRuntimeCache_();
   try {
     var parameters = e && e.parameter ? e.parameter : {};
     var request = {};
@@ -2060,6 +2061,7 @@ function doGet(e) {
 
 /** Google Apps Script Web App POST entry point. */
 function doPost(e) {
+  resetRuntimeCache_();
   try {
     var contents = e && e.postData && typeof e.postData.contents === 'string'
       ? e.postData.contents
@@ -2106,8 +2108,11 @@ function handleRequest_(request) {
     // This prevents the iPads showing "Server read failed: Lock timeout" while another process is saving.
     if (action === 'bootstrap') return json_(bootstrapResponse_());
     if (action === 'serverInfo') return json_(serverInfoResponse_());
-    if (action === 'kitchenSnapshot') return json_(kitchenSnapshotResponse_());
+    if (action === 'connectionCheck') return json_(connectionCheckResponse_());
+    if (action === 'kitchenSnapshot') return json_(kitchenSnapshotResponse_(request));
     if (action === 'menuSnapshot') return json_(menuSnapshotResponse_());
+    if (action === 'itemConfigurationSnapshot') return json_(itemConfigurationSnapshotResponse_(request.itemId || request.ItemID));
+    if (action === 'tillLiveSnapshot') return json_(tillLiveSnapshotResponse_());
     if (action === 'reportsSnapshot') return json_(reportsSnapshotResponse_(request));
     if (action === 'ticketHistorySnapshot') return json_(ticketHistorySnapshotResponse_(request));
     if (action === 'diagnosticsRun') return json_(diagnosticsRun_());
@@ -2121,9 +2126,10 @@ function handleRequest_(request) {
       return { ok: true, versions: versions_(), schema: repair, data: bootstrapData_() };
     }, action));
     if (action === 'commitTicket') return json_(commitTicket_(request.ticket));
-    if (action === 'saveCategory') return json_(withWriteLock_(function () { return saveEntity_('Categories', 'CategoryID', request.category); }, 'saveCategory'));
-    if (action === 'saveItem') return json_(withWriteLock_(function () { return saveEntity_('MenuItems', 'ItemID', request.item); }, 'saveItem'));
+    if (action === 'saveCategory') return json_(withWriteLock_(function () { return request.patch ? saveEntityPatch_('Categories', 'CategoryID', request.patch) : saveEntity_('Categories', 'CategoryID', request.category); }, 'saveCategory'));
+    if (action === 'saveItem') return json_(withWriteLock_(function () { return request.patch ? saveEntityPatch_('MenuItems', 'ItemID', request.patch) : saveEntity_('MenuItems', 'ItemID', request.item); }, 'saveItem'));
     if (action === 'saveItemConfiguration') return json_(withWriteLock_(function () { return saveItemConfiguration_(request.configuration); }, 'saveItemConfiguration'));
+    if (action === 'saveItemConfigurationPatch') return json_(withWriteLock_(function () { return saveItemConfigurationPatch_(request.patch); }, 'saveItemConfigurationPatch'));
     if (action === 'savePrompt') return json_(withWriteLock_(function () { return saveEntity_('Prompts', 'PromptID', request.prompt); }, 'savePrompt'));
     if (action === 'savePromptOption') return json_(withWriteLock_(function () { return saveEntity_('PromptOptions', 'OptionID', request.option); }, 'savePromptOption'));
     if (action === 'savePromptOptionsBatch') return json_(withWriteLock_(function () { return savePromptOptionsBatch_(request.promptId, request.options); }, 'savePromptOptionsBatch'));
@@ -2148,14 +2154,26 @@ function json_(obj) {
 }
 
 function bootstrapResponse_() {
-  // Startup is deliberately read-only. Database changes are only made after
-  // an administrator previews and explicitly applies a repair.
-  var preview = previewDatabaseRepair_();
-  return { ok: true, versions: versions_(), schema: preview, data: bootstrapData_() };
+  // Startup is deliberately read-only. Fast operational startup only. Historical transactions, refunds, reports,
+  // kitchen detail and schema diagnostics are loaded by their dedicated
+  // endpoints when those screens are opened. This keeps Till startup bounded
+  // as the database grows.
+  return {
+    ok: true,
+    versions: versions_(),
+    schema: { ok: true, preview: true, requiresRepair: false, changes: [], deferred: true },
+    data: operationalBootstrapData_()
+  };
 }
 
 function serverInfoResponse_() {
   return { ok: true, versions: versions_(), schema: previewDatabaseRepair_() };
+}
+
+function connectionCheckResponse_() {
+  // Deliberately avoids full sheet/schema scans. Used when saving the URL so
+  // Apps Script cold starts do not appear as a failed connection.
+  return { ok: true, versions: versions_() };
 }
 
 function nonBlockingRepairForRead_() {
@@ -2186,18 +2204,36 @@ function withLock_(fn, options) {
   }
 }
 
+var NOOK_RUNTIME_CACHE_ = { spreadsheet: null, spreadsheetId: '', sheets: {}, headers: {} };
+
+function resetRuntimeCache_() {
+  NOOK_RUNTIME_CACHE_ = { spreadsheet: null, spreadsheetId: '', sheets: {}, headers: {} };
+}
+
 function getSpreadsheet_() {
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty('SPREADSHEET_ID');
-  if (id) return SpreadsheetApp.openById(id);
+  if (id && NOOK_RUNTIME_CACHE_.spreadsheet && String(NOOK_RUNTIME_CACHE_.spreadsheetId) === String(id)) return NOOK_RUNTIME_CACHE_.spreadsheet;
+  if (id) {
+    var byId = SpreadsheetApp.openById(id);
+    NOOK_RUNTIME_CACHE_.spreadsheet = byId;
+    NOOK_RUNTIME_CACHE_.spreadsheetId = byId.getId();
+    return byId;
+  }
   var active = null;
   try { active = SpreadsheetApp.getActiveSpreadsheet(); } catch (err) { active = null; }
   if (active) {
     props.setProperty('SPREADSHEET_ID', active.getId());
+    resetRuntimeCache_();
+    NOOK_RUNTIME_CACHE_.spreadsheet = active;
+    NOOK_RUNTIME_CACHE_.spreadsheetId = active.getId();
     return active;
   }
   var ss = SpreadsheetApp.create('Nook ePOS Database 1.0.6');
   props.setProperty('SPREADSHEET_ID', ss.getId());
+  resetRuntimeCache_();
+  NOOK_RUNTIME_CACHE_.spreadsheet = ss;
+  NOOK_RUNTIME_CACHE_.spreadsheetId = ss.getId();
   return ss;
 }
 
@@ -2206,12 +2242,16 @@ function setSpreadsheetId_(id) {
   if (!id) throw new Error('Missing SpreadsheetID');
   var ss = SpreadsheetApp.openById(id);
   PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
+  resetRuntimeCache_();
+  NOOK_RUNTIME_CACHE_.spreadsheet = ss;
+  NOOK_RUNTIME_CACHE_.spreadsheetId = ss.getId();
   var preview = previewDatabaseRepair_();
   return { ok: true, versions: versions_(), schema: preview, spreadsheetId: ss.getId(), spreadsheetName: ss.getName() };
 }
 
 function clearSpreadsheetId_() {
   PropertiesService.getScriptProperties().deleteProperty('SPREADSHEET_ID');
+  resetRuntimeCache_();
   var ss = getSpreadsheet_();
   var preview = previewDatabaseRepair_();
   return { ok: true, versions: versions_(), schema: preview, spreadsheetId: ss.getId(), spreadsheetName: ss.getName() };
@@ -2297,6 +2337,7 @@ function repairDatabase_(options) {
 
 function ensureSheetSchema_(name, ss) {
   ss = ss || getSpreadsheet_();
+  delete NOOK_RUNTIME_CACHE_.headers[String(ss.getId()) + ':' + String(name)];
   var changes = [];
   var desired = SHEET_SCHEMAS[name];
   if (!desired) throw new Error('Unknown sheet schema: ' + name);
@@ -2360,9 +2401,12 @@ function getHeaderRow_(sheet) {
 
 function sheetHeaders_(sheetName, ensure) {
   var sheet = getSheet_(sheetName);
+  var cacheKey = String(getSpreadsheet_().getId()) + ':' + String(sheetName);
+  if (!ensure && NOOK_RUNTIME_CACHE_.headers[cacheKey]) return NOOK_RUNTIME_CACHE_.headers[cacheKey].slice();
   var result = ensure ? ensureSheetSchema_(sheetName) : { sheet: sheet, headers: getHeaderRow_(sheet), changes: [] };
   var desired = SHEET_SCHEMAS[sheetName] || [];
   var headers = result.headers && result.headers.length ? result.headers : desired.slice();
+  NOOK_RUNTIME_CACHE_.headers[cacheKey] = headers.slice();
   return headers;
 }
 
@@ -2393,11 +2437,17 @@ function seedIfEmpty_() {
 
 function versions_() {
   var ss = getSpreadsheet_();
+  var metadata = {};
+  try {
+    rowsToObjects_('Metadata').forEach(function (row) { metadata[String(row.Key)] = row.Value; });
+  } catch (err) {
+    metadata = {};
+  }
   return {
-    AppName: getMetaReadOnly_('AppName') || NOOK_APP_NAME,
+    AppName: metadata.AppName || NOOK_APP_NAME,
     BackendVersion: NOOK_VERSION,
-    DatabaseVersion: getMetaReadOnly_('DatabaseVersion') || NOOK_DATABASE_VERSION,
-    NextTicketNumber: getMetaReadOnly_('NextTicketNumber') || '1',
+    DatabaseVersion: metadata.DatabaseVersion || NOOK_DATABASE_VERSION,
+    NextTicketNumber: metadata.NextTicketNumber || '1',
     SpreadsheetID: ss.getId(),
     SpreadsheetName: ss.getName(),
     SpreadsheetUrl: ss.getUrl()
@@ -2405,11 +2455,41 @@ function versions_() {
 }
 
 
-function kitchenSnapshotResponse_() {
+function kitchenRevisionReadOnly_() {
+  return String(getMetaReadOnly_('KitchenRevision') || '0');
+}
+
+function incrementKitchenRevision_() {
+  var next = Number(getMeta_('KitchenRevision') || '0') + 1;
+  setMeta_('KitchenRevision', String(next));
+  return String(next);
+}
+
+function kitchenSnapshotResponse_(request) {
+  request = request || {};
+  var revision = kitchenRevisionReadOnly_();
+  var sinceRevision = String(request.sinceRevision || '');
+  var forceFull = request.forceFull === true || String(request.forceFull || '').toLowerCase() === 'true';
+  if (!forceFull && sinceRevision && sinceRevision === revision) {
+    return { ok: true, data: { unchanged: true, revision: revision, serverTime: new Date().toISOString() } };
+  }
   return {
     ok: true,
     data: {
+      unchanged: false,
+      revision: revision,
       kitchenQueue: rowsToObjects_('KitchenQueue'),
+      serverTime: new Date().toISOString()
+    }
+  };
+}
+
+function tillLiveSnapshotResponse_() {
+  return {
+    ok: true,
+    data: {
+      heldOrders: rowsToObjects_('HeldOrders'),
+      nextTicketNumber: getMetaReadOnly_('NextTicketNumber') || '1',
       serverTime: new Date().toISOString()
     }
   };
@@ -2426,6 +2506,23 @@ function menuSnapshotResponse_() {
       deletedItems: rowsToObjects_('DeletedItems'),
       serverTime: new Date().toISOString()
     }
+  };
+}
+
+function itemConfigurationSnapshotResponse_(itemId) {
+  itemId = String(itemId || '').trim();
+  if (!itemId) throw new Error('Missing itemId for item configuration snapshot.');
+  var item = rowsToObjects_('MenuItems').filter(function (row) { return String(row.ItemID) === itemId; })[0] || null;
+  if (!item) throw new Error('Menu item not found after save: ' + itemId);
+  var prompts = rowsToObjects_('Prompts').filter(function (row) { return String(row.TriggerItemID) === itemId; });
+  var promptIds = {};
+  prompts.forEach(function (prompt) { promptIds[String(prompt.PromptID)] = true; });
+  var options = rowsToObjects_('PromptOptions').filter(function (row) { return promptIds[String(row.PromptID)]; });
+  return {
+    ok: true,
+    versions: versions_(),
+    configuration: { item: item, prompts: prompts, options: options },
+    serverTime: new Date().toISOString()
   };
 }
 
@@ -2450,27 +2547,91 @@ function localDateString_(value) {
   return Utilities.formatDate(date, 'Europe/London', 'yyyy-MM-dd');
 }
 
+function rowNumbersMatchingDateRange_(sheetName, fieldName, fromDate, toDate) {
+  var sheet = getSheet_(sheetName);
+  var headers = sheetHeaders_(sheetName, false);
+  var fieldCol = headerIndex_(headers, fieldName) + 1;
+  var lastRow = sheet.getLastRow();
+  if (fieldCol < 1 || lastRow < 2) return [];
+  var values = sheet.getRange(2, fieldCol, lastRow - 1, 1).getValues();
+  var rows = [];
+  for (var i = 0; i < values.length; i++) {
+    var day = localDateString_(values[i][0]);
+    if (day && (!fromDate || day >= fromDate) && (!toDate || day <= toDate)) rows.push(i + 2);
+  }
+  return rows;
+}
+
+function rowNumbersMatchingIds_(sheetName, fieldName, idMap) {
+  if (!idMap || !Object.keys(idMap).length) return [];
+  var sheet = getSheet_(sheetName);
+  var headers = sheetHeaders_(sheetName, false);
+  var fieldCol = headerIndex_(headers, fieldName) + 1;
+  var lastRow = sheet.getLastRow();
+  if (fieldCol < 1 || lastRow < 2) return [];
+  var values = sheet.getRange(2, fieldCol, lastRow - 1, 1).getValues();
+  var rows = [];
+  for (var i = 0; i < values.length; i++) {
+    if (idMap[String(values[i][0])]) rows.push(i + 2);
+  }
+  return rows;
+}
+
+function rowsToObjectsByRowNumbers_(sheetName, rowNumbers) {
+  rowNumbers = (rowNumbers || []).slice().sort(function (a, b) { return a - b; });
+  if (!rowNumbers.length) return [];
+  var sheet = getSheet_(sheetName);
+  var headers = sheetHeaders_(sheetName, false);
+  var output = [];
+  var groups = [];
+  var start = rowNumbers[0];
+  var previous = rowNumbers[0];
+  for (var i = 1; i < rowNumbers.length; i++) {
+    if (rowNumbers[i] === previous + 1) {
+      previous = rowNumbers[i];
+      continue;
+    }
+    groups.push({ start: start, count: previous - start + 1 });
+    start = rowNumbers[i];
+    previous = rowNumbers[i];
+  }
+  groups.push({ start: start, count: previous - start + 1 });
+  groups.forEach(function (group) {
+    var values = sheet.getRange(group.start, 1, group.count, headers.length).getValues();
+    values.forEach(function (row) {
+      if (!row.some(function (cell) { return cell !== '' && cell != null; })) return;
+      var obj = {};
+      headers.forEach(function (h, index) { if (h) obj[h] = coerce_(h, row[index]); });
+      (SHEET_SCHEMAS[sheetName] || []).forEach(function (h) { if (obj[h] == null) obj[h] = ''; });
+      output.push(obj);
+    });
+  });
+  return output;
+}
+
 function transactionSnapshotForRange_(fromDate, toDate) {
   fromDate = String(fromDate || '').slice(0, 10);
   toDate = String(toDate || fromDate || '').slice(0, 10);
-  var tickets = rowsToObjects_('Tickets').filter(function (row) {
-    var day = localDateString_(row.CreatedAt);
-    return day && (!fromDate || day >= fromDate) && (!toDate || day <= toDate);
-  });
+
+  // Scan only the CreatedAt column to locate the requested period, then read
+  // complete rows only for that bounded range. Related item/add-on/refund lines
+  // are located by their ID columns rather than loading years of full rows.
+  var ticketRows = rowNumbersMatchingDateRange_('Tickets', 'CreatedAt', fromDate, toDate);
+  var tickets = rowsToObjectsByRowNumbers_('Tickets', ticketRows);
   var ticketIds = {};
   tickets.forEach(function (row) { ticketIds[String(row.TicketID)] = true; });
-  var refunds = rowsToObjects_('Refunds').filter(function (row) {
-    var day = localDateString_(row.CreatedAt);
-    return day && (!fromDate || day >= fromDate) && (!toDate || day <= toDate);
-  });
+
+  var refundRows = rowNumbersMatchingDateRange_('Refunds', 'CreatedAt', fromDate, toDate);
+  var refunds = rowsToObjectsByRowNumbers_('Refunds', refundRows);
   var refundIds = {};
   refunds.forEach(function (row) { refundIds[String(row.RefundID)] = true; });
+
   return {
     tickets: tickets,
-    ticketItems: rowsToObjects_('TicketItems').filter(function (row) { return ticketIds[String(row.TicketID)]; }),
-    ticketAddOns: rowsToObjects_('TicketAddOns').filter(function (row) { return ticketIds[String(row.TicketID)]; }),
+    ticketItems: rowsToObjectsByRowNumbers_('TicketItems', rowNumbersMatchingIds_('TicketItems', 'TicketID', ticketIds)),
+    ticketAddOns: rowsToObjectsByRowNumbers_('TicketAddOns', rowNumbersMatchingIds_('TicketAddOns', 'TicketID', ticketIds)),
     refunds: refunds,
-    refundItems: rowsToObjects_('RefundItems').filter(function (row) { return refundIds[String(row.RefundID)]; })
+    refundItems: rowsToObjectsByRowNumbers_('RefundItems', rowNumbersMatchingIds_('RefundItems', 'RefundID', refundIds))
   };
 }
 
@@ -2487,15 +2648,40 @@ function ticketHistorySnapshotResponse_(request) {
   return { ok: true, versions: versions_(), date: date, data: transactionSnapshotForRange_(date, date) };
 }
 
+function operationalBootstrapData_() {
+  return {
+    meta: versions_(),
+    settings: settingsObject_(),
+    nextTicketNumber: getMeta_('NextTicketNumber') || '1',
+    categories: rowsToObjects_('Categories'),
+    menuItems: rowsToObjects_('MenuItems'),
+    prompts: rowsToObjects_('Prompts'),
+    promptOptions: rowsToObjects_('PromptOptions'),
+    heldOrders: rowsToObjects_('HeldOrders'),
+    deletedItems: rowsToObjects_('DeletedItems'),
+    tickets: [],
+    ticketItems: [],
+    ticketAddOns: [],
+    refunds: [],
+    refundItems: [],
+    kitchenQueue: []
+  };
+}
+
 function bootstrapData_() {
+  // Full snapshot retained for explicit maintenance/diagnostic callers only.
   var data = { meta: versions_(), settings: settingsObject_(), nextTicketNumber: getMeta_('NextTicketNumber') || '1' };
   Object.keys(LIST_SHEETS).forEach(function (key) { data[key] = rowsToObjects_(LIST_SHEETS[key]); });
   return data;
 }
 
 function getSheet_(name) {
-  var sheet = getSpreadsheet_().getSheetByName(name);
+  var ss = getSpreadsheet_();
+  var cacheKey = String(ss.getId()) + ':' + String(name);
+  if (NOOK_RUNTIME_CACHE_.sheets[cacheKey]) return NOOK_RUNTIME_CACHE_.sheets[cacheKey];
+  var sheet = ss.getSheetByName(name);
   if (!sheet) throw new Error('Missing sheet: ' + name);
+  NOOK_RUNTIME_CACHE_.sheets[cacheKey] = sheet;
   return sheet;
 }
 
@@ -2683,11 +2869,14 @@ function saveItemConfiguration_(configuration) {
     promptCount: savedPrompts.length,
     optionCount: savedOptions.length
   });
+  var confirmed = itemConfigurationSnapshotResponse_(itemId).configuration;
   return {
     ok: true,
     changed: changedSheets.length > 0,
     changedSheets: changedSheets,
-    configuration: { item: savedItem, prompts: savedPrompts, options: savedOptions }
+    configuration: confirmed,
+    confirmedPromptCount: confirmed.prompts.length,
+    confirmedOptionCount: confirmed.options.length
   };
 }
 
@@ -2721,6 +2910,59 @@ function savePromptOptionsBatch_(promptId, options) {
     finalOrder: saved.map(function (option) { return option.OptionID; })
   });
   return { ok: true, promptId: promptId, saved: saved, finalOrder: saved.map(function (option) { return option.OptionID; }) };
+}
+
+
+function saveEntityPatch_(sheetName, idField, patch) {
+  if (!patch || !patch[idField]) throw new Error('Missing ' + idField + ' for patch save.');
+  var saved = updateColumnsById_(sheetName, idField, patch[idField], patch, true);
+  appendAudit_('PATCH', sheetName, patch[idField], { changedFields: Object.keys(patch).filter(function (key) { return key !== idField; }) });
+  return { ok: true, saved: saved, changedFields: Object.keys(patch).filter(function (key) { return key !== idField; }) };
+}
+
+function updateColumnsById_(sheetName, idField, id, patch, createIfMissing) {
+  var sheet = getSheet_(sheetName);
+  var headers = sheetHeaders_(sheetName, true);
+  var idIndex = headerIndex_(headers, idField);
+  if (idIndex < 0) throw new Error('ID field not in schema: ' + idField);
+  var lastRow = sheet.getLastRow(); var targetRow = 0;
+  if (lastRow >= 2) {
+    var ids = sheet.getRange(2, idIndex + 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(id)) { targetRow = i + 2; break; }
+  }
+  if (!targetRow) {
+    if (!createIfMissing) throw new Error('Cannot find ' + id + ' in ' + sheetName);
+    targetRow = Math.max(2, lastRow + 1);
+    sheet.getRange(targetRow, idIndex + 1).setValue(id);
+  }
+  Object.keys(patch || {}).forEach(function (key) {
+    if (key === idField) return;
+    var index = headerIndex_(headers, key);
+    if (index < 0) return;
+    sheet.getRange(targetRow, index + 1).setValue(patch[key] == null ? '' : patch[key]);
+  });
+  var row = sheet.getRange(targetRow, 1, 1, headers.length).getValues()[0];
+  var saved = {}; headers.forEach(function (header, index) { if (header) saved[header] = coerce_(header, row[index]); });
+  return saved;
+}
+
+function saveItemConfigurationPatch_(patch) {
+  patch = patch || {};
+  var itemId = String(patch.itemId || (patch.itemPatch && patch.itemPatch.ItemID) || '');
+  if (!itemId) throw new Error('Item configuration patch is missing its ItemID.');
+  (patch.deletedOptionIds || []).forEach(function (id) { deleteRowById_('PromptOptions', 'OptionID', id); });
+  (patch.deletedPromptIds || []).forEach(function (id) {
+    rowsToObjects_('PromptOptions').filter(function (row) { return String(row.PromptID) === String(id); }).forEach(function (row) { deleteRowById_('PromptOptions', 'OptionID', row.OptionID); });
+    deleteRowById_('Prompts', 'PromptID', id);
+  });
+  var changed = [];
+  if (patch.itemPatch && Object.keys(patch.itemPatch).length > 1) { updateColumnsById_('MenuItems', 'ItemID', itemId, patch.itemPatch, true); changed.push('MenuItems'); }
+  (patch.promptPatches || []).forEach(function (row) { updateColumnsById_('Prompts', 'PromptID', row.PromptID, row, true); if (changed.indexOf('Prompts') < 0) changed.push('Prompts'); });
+  (patch.optionPatches || []).forEach(function (row) { updateColumnsById_('PromptOptions', 'OptionID', row.OptionID, row, true); if (changed.indexOf('PromptOptions') < 0) changed.push('PromptOptions'); });
+  if ((patch.deletedPromptIds || []).length && changed.indexOf('Prompts') < 0) changed.push('Prompts');
+  if (((patch.deletedOptionIds || []).length || (patch.deletedPromptIds || []).length) && changed.indexOf('PromptOptions') < 0) changed.push('PromptOptions');
+  appendAudit_('SAVE_ITEM_CONFIGURATION_PATCH', 'MenuItems', itemId, { changedSheets: changed, itemFields: Object.keys(patch.itemPatch || {}), promptPatchCount: (patch.promptPatches || []).length, optionPatchCount: (patch.optionPatches || []).length, deletedPromptCount: (patch.deletedPromptIds || []).length, deletedOptionCount: (patch.deletedOptionIds || []).length });
+  return { ok: true, changed: changed.length > 0, changedSheets: changed, configuration: itemConfigurationSnapshotResponse_(itemId).configuration };
 }
 
 function saveEntity_(sheetName, idField, obj) {
@@ -2867,12 +3109,14 @@ function saveConfirmedUrl_(request) {
   var database = String(request.databaseVersion || NOOK_DATABASE_VERSION).trim();
   var version = String(request.version || ('Frontend ' + frontend + ' / Backend ' + backend + ' / Database ' + database)).trim();
   var savedAt = new Date().toISOString();
-  saveSetting_('LastConfirmedScriptUrl', url);
-  saveSetting_('LastConfirmedUrlVersion', version);
-  saveSetting_('LastConfirmedUrlSavedAt', savedAt);
-  saveSetting_('LastConfirmedUrlFrontendVersion', frontend);
-  saveSetting_('LastConfirmedUrlBackendVersion', backend);
-  saveSetting_('LastConfirmedUrlDatabaseVersion', database);
+  setKeyValuesBatch_('Settings', {
+    LastConfirmedScriptUrl: url,
+    LastConfirmedUrlVersion: version,
+    LastConfirmedUrlSavedAt: savedAt,
+    LastConfirmedUrlFrontendVersion: frontend,
+    LastConfirmedUrlBackendVersion: backend,
+    LastConfirmedUrlDatabaseVersion: database
+  });
   appendAudit_('SAVE_CONFIRMED_URL', 'Settings', 'LastConfirmedScriptUrl', { url: url, version: version, savedAt: savedAt });
   return { ok: true, settings: settingsObject_() };
 }
@@ -2892,8 +3136,9 @@ function commitTicket_(payload) {
     var ticketNumber = nextTicketNumber_();
     var ticketId = uid_('T');
     var payment = payload.payment || {};
+    var settings = settingsObject_();
     var staffDiscountApplied = truthy_(meta.StaffDiscountApplied);
-    var staffDiscountPercent = staffDiscountApplied ? clampPercent_(getSetting_('StaffDiscountPercent') || meta.StaffDiscountPercent || 0) : 0;
+    var staffDiscountPercent = staffDiscountApplied ? clampPercent_(settings.StaffDiscountPercent || meta.StaffDiscountPercent || 0) : 0;
     var loyaltyMap = loyaltyEligibilityMap_();
     validateLoyaltyRedemptions_(payload.cart, loyaltyMap);
     var totals = calculateTotals_(payload.cart, { StaffDiscountApplied: staffDiscountApplied, StaffDiscountPercent: staffDiscountPercent }, loyaltyMap);
@@ -2967,7 +3212,7 @@ function commitTicket_(payload) {
     appendObjects_('TicketAddOns', ticketAddOns);
 
     var kitchen = null;
-    var kitchenEnabled = String(getSetting_('KitchenDisplayEnabled') || 'TRUE').toUpperCase() !== 'FALSE';
+    var kitchenEnabled = String(settings.KitchenDisplayEnabled || 'TRUE').toUpperCase() !== 'FALSE';
     if (kitchenEnabled) {
       var kitchenPayload = kitchenPayload_(ticket, ticketItems, ticketAddOns);
       kitchen = {
@@ -2983,19 +3228,37 @@ function commitTicket_(payload) {
         PayloadJSON: JSON.stringify(kitchenPayload)
       };
       appendObjects_('KitchenQueue', [kitchen]);
+      incrementKitchenRevision_();
     }
     appendAudit_('COMMIT_TICKET', 'Tickets', ticketId, { ticket: ticket, ticketItems: ticketItems, ticketAddOns: ticketAddOns });
     return { ok: true, data: { ticket: ticket, ticketItems: ticketItems, ticketAddOns: ticketAddOns, kitchen: kitchen } };
   }, 'commitTicket');
 }
 
+function firstRowNumberMatchingValue_(sheetName, fieldName, value) {
+  value = String(value == null ? '' : value);
+  if (!value) return 0;
+  var sheet = getSheet_(sheetName);
+  var headers = sheetHeaders_(sheetName, false);
+  var fieldCol = headerIndex_(headers, fieldName) + 1;
+  var lastRow = sheet.getLastRow();
+  if (fieldCol < 1 || lastRow < 2) return 0;
+  var found = sheet.getRange(2, fieldCol, lastRow - 1, 1).createTextFinder(value).matchEntireCell(true).findNext();
+  return found ? found.getRow() : 0;
+}
+
 function ticketBundleByClientRequestId_(clientRequestId) {
-  var tickets = rowsToObjects_('Tickets');
-  var ticket = tickets.filter(function (t) { return String(t.ClientRequestID || '') === String(clientRequestId); })[0];
+  var ticketRow = firstRowNumberMatchingValue_('Tickets', 'ClientRequestID', clientRequestId);
+  if (!ticketRow) return null;
+  var tickets = rowsToObjectsByRowNumbers_('Tickets', [ticketRow]);
+  var ticket = tickets[0] || null;
   if (!ticket) return null;
-  var ticketItems = rowsToObjects_('TicketItems').filter(function (item) { return String(item.TicketID) === String(ticket.TicketID); });
-  var ticketAddOns = rowsToObjects_('TicketAddOns').filter(function (addon) { return String(addon.TicketID) === String(ticket.TicketID); });
-  var kitchen = rowsToObjects_('KitchenQueue').filter(function (k) { return String(k.TicketID) === String(ticket.TicketID); })[0] || null;
+  var ticketMap = {};
+  ticketMap[String(ticket.TicketID)] = true;
+  var ticketItems = rowsToObjectsByRowNumbers_('TicketItems', rowNumbersMatchingIds_('TicketItems', 'TicketID', ticketMap));
+  var ticketAddOns = rowsToObjectsByRowNumbers_('TicketAddOns', rowNumbersMatchingIds_('TicketAddOns', 'TicketID', ticketMap));
+  var kitchenRows = rowsToObjectsByRowNumbers_('KitchenQueue', rowNumbersMatchingIds_('KitchenQueue', 'TicketID', ticketMap));
+  var kitchen = kitchenRows[0] || null;
   return { ok: true, duplicate: true, data: { ticket: ticket, ticketItems: ticketItems, ticketAddOns: ticketAddOns, kitchen: kitchen } };
 }
 
@@ -3083,8 +3346,10 @@ function kitchenUpdate_(request) {
   var items = Array.isArray(payload.Items) ? payload.Items : [];
   var hasFood = false;
   var hasDrinks = false;
+  var categoriesById = {};
+  rowsToObjects_('Categories').forEach(function (category) { categoriesById[String(category.CategoryID)] = category; });
   items.forEach(function (item) {
-    var category = rowsToObjects_('Categories').filter(function (c) { return String(c.CategoryID) === String(item.CategoryID); })[0];
+    var category = categoriesById[String(item.CategoryID)] || null;
     if (category && truthy_(category.IsDrinkCategory)) hasDrinks = true;
     else hasFood = true;
   });
@@ -3092,6 +3357,9 @@ function kitchenUpdate_(request) {
   if (request.CompleteAll === true || request.CompleteAll === 'true') {
     if (hasFood) payload.Sections.FoodStatus = 'COMPLETE';
     if (hasDrinks) payload.Sections.DrinksStatus = 'COMPLETE';
+  } else if (request.ReopenAll === true || request.ReopenAll === 'true') {
+    if (hasFood) payload.Sections.FoodStatus = 'OPEN';
+    if (hasDrinks) payload.Sections.DrinksStatus = 'OPEN';
   } else {
     var sectionName = String(request.SectionName || '').toLowerCase();
     var sectionStatus = String(request.SectionStatus || '').toUpperCase();
@@ -3106,10 +3374,12 @@ function kitchenUpdate_(request) {
   var overall = foodDone && drinksDone ? 'COMPLETE' : 'OPEN';
   payload.Sections.CompletedAt = overall === 'COMPLETE' ? new Date().toISOString() : '';
 
-  return updateById_('KitchenQueue', 'KitchenID', request.KitchenID, {
+  var updated = updateById_('KitchenQueue', 'KitchenID', request.KitchenID, {
     Status: overall,
     PayloadJSON: JSON.stringify(payload)
   });
+  incrementKitchenRevision_();
+  return updated;
 }
 
 function refundTicket_(request) {
@@ -3185,13 +3455,16 @@ function settingsObject_() {
 function getKeyValue_(sheetName, key) {
   var sheet = getSheet_(sheetName);
   var headers = sheetHeaders_(sheetName, true);
-  var keyCol = headerIndex_(headers, 'Key') + 1;
-  var valueCol = headerIndex_(headers, 'Value') + 1;
+  var keyIndex = headerIndex_(headers, 'Key');
+  var valueIndex = headerIndex_(headers, 'Value');
   var lastRow = sheet.getLastRow();
-  if (lastRow < 2 || keyCol < 1 || valueCol < 1) return '';
-  var keys = sheet.getRange(2, keyCol, lastRow - 1, 1).getValues();
-  var values = sheet.getRange(2, valueCol, lastRow - 1, 1).getValues();
-  for (var i = 0; i < keys.length; i++) { if (String(keys[i][0]) === String(key)) return values[i][0]; }
+  if (lastRow < 2 || keyIndex < 0 || valueIndex < 0) return '';
+  var firstCol = Math.min(keyIndex, valueIndex) + 1;
+  var width = Math.abs(valueIndex - keyIndex) + 1;
+  var values = sheet.getRange(2, firstCol, lastRow - 1, width).getValues();
+  var keyOffset = keyIndex + 1 - firstCol;
+  var valueOffset = valueIndex + 1 - firstCol;
+  for (var i = 0; i < values.length; i++) { if (String(values[i][keyOffset]) === String(key)) return values[i][valueOffset]; }
   return '';
 }
 
@@ -3200,17 +3473,48 @@ function getKeyValueReadOnly_(sheetName, key) {
     var sheet = getSpreadsheet_().getSheetByName(sheetName);
     if (!sheet) return '';
     var headers = getHeaderRow_(sheet);
-    var keyCol = headerIndex_(headers, 'Key') + 1;
-    var valueCol = headerIndex_(headers, 'Value') + 1;
+    var keyIndex = headerIndex_(headers, 'Key');
+    var valueIndex = headerIndex_(headers, 'Value');
     var lastRow = sheet.getLastRow();
-    if (lastRow < 2 || keyCol < 1 || valueCol < 1) return '';
-    var keys = sheet.getRange(2, keyCol, lastRow - 1, 1).getValues();
-    var values = sheet.getRange(2, valueCol, lastRow - 1, 1).getValues();
-    for (var i = 0; i < keys.length; i++) { if (String(keys[i][0]) === String(key)) return values[i][0]; }
+    if (lastRow < 2 || keyIndex < 0 || valueIndex < 0) return '';
+    var firstCol = Math.min(keyIndex, valueIndex) + 1;
+    var width = Math.abs(valueIndex - keyIndex) + 1;
+    var values = sheet.getRange(2, firstCol, lastRow - 1, width).getValues();
+    var keyOffset = keyIndex + 1 - firstCol;
+    var valueOffset = valueIndex + 1 - firstCol;
+    for (var i = 0; i < values.length; i++) { if (String(values[i][keyOffset]) === String(key)) return values[i][valueOffset]; }
   } catch (err) {
     return '';
   }
   return '';
+}
+
+function setKeyValuesBatch_(sheetName, updates) {
+  updates = updates || {};
+  var updateKeys = Object.keys(updates);
+  if (!updateKeys.length) return;
+  var sheet = getSheet_(sheetName);
+  var headers = sheetHeaders_(sheetName, true);
+  var keyIndex = headerIndex_(headers, 'Key');
+  var valueIndex = headerIndex_(headers, 'Value');
+  if (keyIndex < 0 || valueIndex < 0) throw new Error(sheetName + ' must contain Key and Value columns');
+  var lastRow = sheet.getLastRow();
+  var rows = lastRow >= 2 ? sheet.getRange(2, 1, lastRow - 1, headers.length).getValues() : [];
+  var rowByKey = {};
+  rows.forEach(function (row, index) { rowByKey[String(row[keyIndex])] = index; });
+  updateKeys.forEach(function (key) {
+    var index = rowByKey[String(key)];
+    if (index == null) {
+      var row = headers.map(function () { return ''; });
+      row[keyIndex] = key;
+      row[valueIndex] = updates[key];
+      rowByKey[String(key)] = rows.length;
+      rows.push(row);
+    } else {
+      rows[index][valueIndex] = updates[key];
+    }
+  });
+  if (rows.length) sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
 }
 
 function setKeyValue_(sheetName, key, value) {
@@ -3294,7 +3598,7 @@ function diagnosticsRun_() {
   }
   try {
     var queue = rowsToObjects_('KitchenQueue');
-    var open = queue.filter(function (row) { return String(row.Status || '').toUpperCase() !== 'COMPLETED'; }).length;
+    var open = queue.filter(function (row) { return String(row.Status || '').toUpperCase() !== 'COMPLETE'; }).length;
     results.kitchen = { status: 'PASS', message: 'Kitchen queue data is readable.', detail: open + ' open ticket(s)' };
   } catch (err3) {
     results.kitchen = { status: 'FAIL', message: 'Kitchen queue data could not be read.', detail: errorMessage_(err3) };

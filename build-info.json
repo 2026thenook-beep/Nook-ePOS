@@ -1,12 +1,19 @@
 {
   "appName": "The Nook ePOS",
-  "release": "3.8.6",
-  "frontendVersion": "3.8.6",
-  "backendVersion": "3.8.6",
+  "release": "3.13.19",
+  "frontendVersion": "3.13.19",
+  "backendVersion": "3.13.18",
   "databaseVersion": "1.0.6",
-  "releaseType": "refresh-stability-and-cross-device-sync",
-  "behaviouralCompatibility": "3.4.1",
+  "releaseType": "frontend-maintenance",
+  "behaviouralCompatibility": "3.10.0",
   "versionSource": "build-info.json",
   "architecture": "shared-core-model-presentation-operations",
-  "name": "Non-destructive Refresh and Cross-device Ticket Sync"
+  "name": "Single-Day Reports / Explicit Comparisons",
+  "mergeSource": "3.10.0",
+  "rollbackRelease": "3.13.18",
+  "consolidationReference": "NOOK-PATCH-MERGE-3.10.0-R01",
+  "maintenanceReference": "NOOK-REPORT-DAY-COMPARISON-3.13.19",
+  "version": "3.13.19",
+  "buildDate": "2026-08-07",
+  "notes": "Frontend-only Reports refinement. Reports now use one selected report date. The selected day, previous day and same weekday last week are requested as three exact one-day reportsSnapshot reads instead of one expanded multi-day window. Comparison panels are explicitly labelled as comparisons. Export is restricted to the selected day and is disabled until that selected day has loaded. Report refresh is latest-date-wins: a date selected while another report refresh is in flight is queued and loaded next rather than discarded. Existing compatible Apps Script backends 3.13.16, 3.13.17 and 3.13.18 remain supported; included Code.gs remains 3.13.18 and is unchanged. Database remains 1.0.6."
 }

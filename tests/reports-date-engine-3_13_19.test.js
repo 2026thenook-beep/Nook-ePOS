@@ -1,0 +1,18 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const start = app.indexOf('  function todayDateString(date) {');
+const end = app.indexOf('  function dateInPeriod', start);
+assert(start >= 0 && end > start, 'report date functions could not be extracted');
+const source = app.slice(start, end);
+const state = { reportFrom: '2026-08-07' };
+const funcs = new Function('state', source + '\nreturn { reportPeriodDefinition, shiftReportDate };')(state);
+let p = funcs.reportPeriodDefinition('2026-08-07');
+assert.deepStrictEqual({from:p.from,to:p.to,previous:p.previousFrom,lastWeek:p.lastWeekFrom}, {from:'2026-08-07',to:'2026-08-07',previous:'2026-08-06',lastWeek:'2026-07-31'});
+p = funcs.reportPeriodDefinition('2026-08-01');
+assert.strictEqual(p.previousFrom, '2026-07-31');
+assert.strictEqual(p.lastWeekFrom, '2026-07-25');
+p = funcs.reportPeriodDefinition('2026-03-01');
+assert.strictEqual(p.previousFrom, '2026-02-28');
+assert.strictEqual(p.lastWeekFrom, '2026-02-22');
+console.log('3.13.19 report date engine checks passed');

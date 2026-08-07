@@ -1,0 +1,14 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const qm=fs.readFileSync('js/queue-manager.js','utf8');
+const release=fs.readFileSync('js/release.js','utf8');
+assert(app.includes('requestBootstrapWithFourAttempts'));
+assert(app.includes("var delays = [0, 1000, 3000, 7000]"));
+assert(app.includes("name: 'transaction-upload'"));
+assert(app.includes("name: 'server-reconnect'"));
+assert(app.includes('await storeLocalPaidTicket(payload, previewBundle)'));
+assert(qm.includes("indexedDB.open(DB_NAME, DB_VERSION)"));
+assert(app.includes('Payment secured locally — synchronising in background'));
+assert(!app.includes('Wait for the server confirmation'));
+assert(release.includes("appVersion: '3.13.19'"));
+console.log('local-first sync 3.13.18 tests passed');

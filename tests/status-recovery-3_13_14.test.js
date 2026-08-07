@@ -1,0 +1,24 @@
+const fs = require('fs');
+const path = require('path');
+const assert = require('assert');
+const root = path.resolve(__dirname, '..');
+const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+const release = fs.readFileSync(path.join(root, 'js/release.js'), 'utf8');
+
+assert(release.includes("appVersion: '3.13.19'"));
+assert(app.includes('var activeSyncFaults = Object.create(null);'));
+assert(app.includes('function markSyncFault(name, error)'));
+assert(app.includes('function clearSyncFault(name)'));
+assert(app.includes('if (manualSyncPaused || maintenanceActionActive || hasActiveSyncFaults()) return false;'));
+assert(app.includes("markSyncFault('kitchen', err);"));
+assert(app.includes("clearSyncFault('kitchen');"));
+assert(app.includes("markSyncFault('till-live', err);"));
+assert(app.includes("clearSyncFault('till-live');"));
+assert(app.includes("markSyncFault('menu', err);"));
+assert(app.includes("clearSyncFault('menu');"));
+assert(app.includes("markSyncFault('transaction-upload', err);"));
+assert(app.includes("clearSyncFault('transaction-upload');"));
+assert(app.includes("clearSyncFault('connection');"));
+assert(app.includes("state.status.message = 'System OK';"));
+assert(!app.includes("state.status.message = 'All device-local tickets have synchronised to the server';"));
+console.log('status recovery 3.13.18 tests passed');

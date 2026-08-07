@@ -9,4 +9,4 @@ assert(app.includes("if (!state.cart.length) resetCurrentOrderState({ keepServer
 assert(app.includes("if (action === 'clear-cart') { resetCurrentOrderState({ keepServerName: true });"));
 assert(app.includes("state.orderTypeSelectedForEmptyOrder = state.cart.length === 0;"));
 assert(app.includes("state.orderTypeSelectedForEmptyOrder = false;\n      queueTillAddFeedback"));
-console.log('3.8.6 order state lifecycle verified.');
+console.log('3.13.18 order state lifecycle verified.');

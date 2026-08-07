@@ -1,0 +1,12 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8'), coord=fs.readFileSync('js/server-coordinator.js','utf8'), queue=fs.readFileSync('js/queue-manager.js','utf8'), index=fs.readFileSync('index.html','utf8');
+assert(index.includes('server-coordinator.js'));
+assert(app.includes('ServerCoordinator.request(action, payload, { allowDuringMaintenance: maintenanceActionActive === true })'));
+assert(coord.includes("var lanes = { write: [], kitchen: [], live: [], general: [], background: [] }"));
+assert(coord.includes('maxConcurrent || 3'));
+assert(coord.includes('inFlightReads'));
+assert(queue.includes("OUTBOX_STORE = 'outbox'"));
+assert(app.includes('processDurableOutbox'));
+assert(app.includes('PrintReceiptsEnabled'));
+assert(app.includes('data-modal-action="print-receipt"'));
+console.log('server request coordinator 3.13.18 static tests passed');

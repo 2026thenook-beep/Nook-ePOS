@@ -1,0 +1,17 @@
+const fs=require('fs'), assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const css=fs.readFileSync('css/app.css','utf8');
+const release=fs.readFileSync('js/release.js','utf8');
+assert(release.includes("appVersion: '3.13.19'"));
+assert(app.includes('activeReceiptBundle = { ticket: ticket'));
+assert(app.includes("clientRequestId: String(clientRequestId || '')"));
+assert(app.includes("transactionRow.syncStatus !== 'SYNCED'"));
+assert(app.includes("row.payload.ticketId = transactionRow.serverTicket.ticket.TicketID"));
+assert(app.includes('receipt-completion-actions'));
+assert(css.includes('.receipt-completion-actions'));
+assert(app.includes("focusedRefreshOverlay('reports'"));
+assert(app.includes("focusedRefreshOverlay('history'"));
+assert(app.includes('if (entry.inFlight) return;'));
+assert(app.includes('renderBurstCount'));
+assert(app.includes('lastRenderError'));
+console.log('3.13.18 workflow polish checks passed');

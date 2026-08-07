@@ -1,0 +1,14 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const css = fs.readFileSync('css/app.css', 'utf8');
+const release = fs.readFileSync('js/release.js', 'utf8');
+assert(app.includes('function renderPaymentOrderReview()'), 'order review renderer missing');
+assert(app.includes('data-modal-action="open-order-review"'), 'review order button missing');
+assert(app.includes('data-modal-action="back-to-till"'), 'back to till action missing');
+assert(app.includes('class="payment-action-panel"'), 'dedicated action panel missing');
+assert(css.includes('.cash-payment-layout'), 'responsive cash layout missing');
+assert(css.includes('@media (max-width:680px)'), 'small-screen payment breakpoint missing');
+assert(css.includes('.payment-order-review[hidden]'), 'review panel visibility rule missing');
+assert(release.includes("appVersion: '3.13.19'"), 'release version mismatch');
+console.log('responsive payment/order review 3.13.18: PASS');

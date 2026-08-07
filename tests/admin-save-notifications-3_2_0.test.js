@@ -14,4 +14,4 @@ assert(!app.includes('window.confirm('), 'native confirm remains in application'
 assert(!app.includes('window.alert('), 'native alert remains in application');
 assert(foundation.includes('toast: function'), 'themed toast service missing');
 assert(foundation.includes('confirm: function'), 'themed confirmation service missing');
-console.log('3.8.6 admin save and notification checks passed.');
+console.log('3.13.18 admin save and notification checks passed.');

@@ -1,0 +1,28 @@
+const fs = require('fs');
+const path = require('path');
+const root = path.join(__dirname, '..');
+const app = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+function ok(value, message) { if (!value) throw new Error(message); }
+ok(app.includes('var renderInProgress = false'), 'render recursion guard missing');
+ok(app.includes('if (renderInProgress) { renderQueued = true; return; }'), 'nested render must be queued');
+ok(app.includes('function renderEmergencyShell(error)'), 'emergency visible shell missing');
+ok(app.includes('renderBurstCount > 6'), 'render-loop circuit breaker missing');
+ok(app.includes('Repeated render cycle stopped by safety circuit breaker'), 'render-loop recovery reason missing');
+ok(app.includes("stopSyncCoordinator();\n      renderEmergencyShell(error);"), 'render error must stop background polling and show recovery shell');
+ok(app.includes('function loadLastKnownGoodServerCache()'), 'last-known-good cache restore missing');
+ok(app.includes('hasUsableCachedData'), 'cached-data availability state missing');
+ok(app.includes('function resumeBackgroundSyncAfterWake()'), 'wake resume handler missing');
+ok(app.includes('if (wakeSyncInProgress'), 'wake re-entry guard missing');
+const wake = app.slice(app.indexOf('async function resumeBackgroundSyncAfterWake()'), app.indexOf('function scheduleWakeResume('));
+const wakeCheck = app.slice(app.indexOf('async function runWakeConsistencyCheck(generation)'), app.indexOf('async function resumeBackgroundSyncAfterWake()'));
+ok(!wake.includes('render();'), 'wake path must not render the full screen');
+ok(!wake.includes('renderTill()'), 'wake path must not redraw Till');
+ok(!wake.includes('renderAdmin()'), 'wake path must not redraw Menu Admin');
+ok(!wake.includes('bootstrap('), 'wake path must not bootstrap/clear state');
+ok(wakeCheck.includes("api('connectionCheck')"), 'wake path must perform deterministic lightweight connection check');
+ok(wake.includes('wakeWatchdogPromise(generation)'), 'wake path must be protected by watchdog');
+ok(html.includes('startup-till-shell'), 'static startup shell missing');
+ok(html.includes('Loading Till'), 'startup shell must visibly identify Till loading');
+ok(app.includes("if (action === 'retry-safe-render')"), 'render recovery action missing');
+console.log('3.13.18 safe wake and blank-screen containment checks passed');

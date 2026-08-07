@@ -1,76 +1,43 @@
-**Current release: 3.2.0**
+# The Nook ePOS 3.13.19 — Single-Day Reports / Explicit Comparisons
 
-# The Nook ePOS Browser 3.0.0
+Release reference: `NOOK-REPORT-DAY-COMPARISON-3.13.19`
 
-Engineering-foundation release based on the approved 1.3.7 functionality.
+- Frontend: **3.13.19**
+- Compatible Apps Script backend: **3.13.18 / 3.13.17 / 3.13.16**
+- Included Apps Script source: **3.13.18** (unchanged)
+- Database: **1.0.6** (unchanged)
+- Rollback frontend: **3.13.18**
 
-## Deploy
+## Deployment
 
-1. Upload `index.html`, `css/` and `js/` to the same web host used by the POS.
-2. Replace the Apps Script project code with `google/Code.gs`.
-3. In Apps Script choose **Deploy → Manage deployments → Edit → New version → Deploy**.
-4. Open the frontend and use **Settings → Save script URL**, then confirm the status shows:
-   - Frontend 3.0.0
-   - Backend 3.0.0
-   - Database 1.0.6
-5. Hard-refresh all POS devices after deployment.
+This is deliberately a **frontend-only release**. If the live status already reports backend 3.13.16, 3.13.17 or 3.13.18 with database 1.0.6, replace/update the browser frontend files only. **Do not redeploy Google Apps Script for 3.13.19.**
 
-## Architecture
+If the live backend is still 3.13.15, first move the Apps Script backend to 3.13.16+ because 3.13.16 contained real backend changes.
 
-- `js/release.js`: browser release metadata.
-- `js/config.js`: deployment/runtime configuration.
-- `js/core.js`: pure POS calculations and ticket construction.
-- `js/foundation.js`: shared API transport, UI busy/modal service and compatibility helpers.
-- `js/app.js`: screen rendering and workflow orchestration.
-- `google/Code.gs`: Google Sheets persistence and server actions.
-- `build-info.json`: packaging/version manifest.
-- `scripts/verify-release.js`: pre-release version verification.
-- `tests/`: regression suite.
+## Reports workflow
 
-No database migration is required from 1.3.7.
+The Reports screen now uses one **Report date**. When that date is loaded the frontend independently requests:
 
+1. **Selected report date** — this is the report shown and the only date included in export.
+2. **Comparison: Previous day** — comparison only.
+3. **Comparison: Same weekday last week** — comparison only.
 
-## 3.0.0 Kitchen ticket improvements
-- Added **Complete both** to close food and drinks together from one kitchen ticket.
-- Every configured/additional item now shows an explicit quantity, including ×1, on Till tickets, saved receipt screens, held orders, Kitchen Ticket Display and emailed HTML/plain-text receipts.
-- Kitchen configured items use larger, heavier text for faster reading.
+This removes the old behaviour where a one-day report could make one larger request spanning up to the comparison date.
 
-## 3.0.0 Prompt option drag-and-drop
+The report refresh control says **Reload selected day + comparisons**. The export control says **Export selected day** and stays disabled until the selected date has successfully loaded.
 
-Prompt options can be dragged into their required order using the handle at the start of each row. Changes remain queued until **Save option changes** is selected. The app then reloads the saved prompt data from Google Sheets and displays the confirmed order.
+If the user changes the date while an older Reports request is running, the newer date is kept as the pending request. The stale result is ignored and the newest selected date is loaded next instead of being discarded.
 
-## 3.0.0 Prompt option final-order saving
+If a comparison request fails after the selected day has loaded, the selected-day report remains usable and the failed comparison is shown as unavailable.
 
-- Prompt option rows now show clear headings: Position, Name, Price, Type, Quantity, and Status / action.
-- Raw Sort values are hidden because they are internal database data.
-- Dragging changes only the final visual sequence.
-- Selecting Save option changes sends one atomic batch to Apps Script.
-- Apps Script assigns clean sequential sort positions and reloads the saved data.
+## Export scope
 
-## 3.0.0 Variable quantities and kitchen completion
+The CSV is explicitly limited to the selected report date. It includes the selected day's summary, sales, refunds and item lines and is named:
 
-- Variable-quantity prompt options use only the touch-friendly minus/value/plus control; there is no redundant tick box.
-- Standard options do not display an unnecessary ×1 marker.
-- Kitchen completion stamps immediately and no longer disappears then reappears after the Google Sheets response.
+`nook-report-YYYY-MM-DD.csv`
 
-## 3.0.0 version authority and patch merge
+Comparison records are not exported.
 
-`build-info.json` is now the release authority. Run `node scripts/sync-release.js` before verification and packaging, then run `node scripts/verify-release.js`. Settings displays the expected and reported versions for the browser, Apps Script and database separately.
+## Previous 3.13.18 fixes retained
 
-
-## 3.3.0 Menu Admin workflow
-The selected menu item now has one sticky Save Configuration action covering item details, prompts and options. It is enabled only when the normalised working configuration differs from the last authoritative snapshot. Navigation is protected by Save, Discard or Stay choices. Categories remain separately saved because they are shared records.
-
-
-## 3.8.1 focused screen refresh
-Reports and Ticket History now reset to today when opened and fetch only the transaction data required for that screen.
-
-
-## Apps Script maintenance tools (3.8.1)
-
-The `google/Code.gs` file contains permanently visible manual functions: `authoriseEmailService`, `sendTestEmailToScriptOwner`, `runSystemDiagnostics`, `repairSpreadsheet`, `setupOrRepairDatabase`, and `verifyDatabaseConnection`.
-
-
-## Database repair safety (3.8.5)
-
-Application startup and server-info checks are read-only. They preview schema differences but never alter the spreadsheet. Use **Settings → Database maintenance → Preview required changes** first, then **Apply additive repair** and confirm. The repair only creates missing sheets, appends missing columns, creates absent settings/default metadata, and updates version metadata. Existing rows and configured values are retained. The Apps Script function `previewSpreadsheetRepair` provides the same no-write preview from the script editor.
+3.13.19 includes the 3.13.18 device-local ticket persistence/clear-all fixes and Kitchen status recovery fixes unchanged.

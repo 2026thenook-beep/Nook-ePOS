@@ -1,0 +1,18 @@
+const fs=require('fs');
+const assert=require('assert');
+const code=fs.readFileSync('google/Code.gs','utf8');
+const app=fs.readFileSync('js/app.js','utf8');
+assert(code.includes("var NOOK_VERSION = '3.13.18'"));
+const start=code.indexOf('function bootstrapResponse_()');
+const end=code.indexOf('function serverInfoResponse_()', start);
+const block=code.slice(start,end);
+assert(block.includes('operationalBootstrapData_()'));
+assert(!block.includes('previewDatabaseRepair_()'));
+const opStart=code.indexOf('function operationalBootstrapData_()');
+const opEnd=code.indexOf('function bootstrapData_()', opStart);
+const op=code.slice(opStart,opEnd);
+['Categories','MenuItems','Prompts','PromptOptions','HeldOrders','DeletedItems'].forEach(x=>assert(op.includes("rowsToObjects_('"+x+"')")));
+['Tickets','TicketItems','TicketAddOns','Refunds','RefundItems','KitchenQueue'].forEach(x=>assert(!op.includes("rowsToObjects_('"+x+"')")));
+assert(app.includes("api('reportsSnapshot'"));
+assert(app.includes("api('ticketHistorySnapshot'"));
+console.log('3.13.18 fast operational bootstrap checks passed');

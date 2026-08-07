@@ -1,0 +1,15 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const backend = fs.readFileSync('google/Code.gs','utf8');
+const coordinator = fs.readFileSync('js/server-coordinator.js','utf8');
+const css = fs.readFileSync('css/app.css','utf8');
+assert(app.includes("data-mode=\"arrangement\""), 'Menu arrangement tab missing');
+assert(app.includes('function renderMenuArrangementEditor()'), 'Arrangement renderer missing');
+assert(app.includes('function saveMenuArrangement()'), 'Arrangement save missing');
+assert(app.includes("saveServerEntity('saveMenuArrangement'"), 'Frontend batch action missing');
+assert(backend.includes("action === 'saveMenuArrangement'"), 'Backend route missing');
+assert(backend.includes('function saveMenuArrangement_(arrangement)'), 'Backend implementation missing');
+assert(coordinator.includes("'saveMenuArrangement'"), 'Coordinator must classify arrangement as write');
+assert(css.includes('.arrangement-grid'), 'Arrangement CSS missing');
+console.log('menu arrangement 3.13.1 test passed');

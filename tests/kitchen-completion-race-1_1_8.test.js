@@ -12,4 +12,4 @@ assert(backend.includes("request.SectionName"), 'backend atomic section merge mi
 assert(backend.includes("payload.Sections.FoodStatus"), 'food merge missing');
 assert(backend.includes("payload.Sections.DrinksStatus"), 'drinks merge missing');
 assert(backend.includes("withWriteLock_(function () { return kitchenUpdate_(request); }"), 'kitchen update must remain write locked');
-console.log('kitchen completion race 3.8.6 checks passed');
+console.log('kitchen completion race 3.13.18 checks passed');

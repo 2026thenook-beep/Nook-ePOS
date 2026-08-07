@@ -8,4 +8,4 @@ assert(backend.includes("function previewSpreadsheetRepair()"));
 const bootstrapBlock=backend.slice(backend.indexOf('function bootstrapResponse_()'), backend.indexOf('function serverInfoResponse_()')); assert(!bootstrapBlock.includes('repairDatabase_('));
 assert(app.includes('data-action=\"preview-database-repair\"'));
 assert(app.includes('Existing sales, items, prompts and user data will be retained.'));
-console.log('3.8.6 database repair safety verified.');
+console.log('3.13.18 database repair safety verified.');

@@ -1,0 +1,16 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const coord=fs.readFileSync('js/server-coordinator.js','utf8');
+const release=fs.readFileSync('js/release.js','utf8');
+assert(coord.includes("new Set(['kitchenSnapshot','kitchenUpdate'])"));
+assert(coord.includes("new Set(['tillLiveSnapshot'])"));
+assert(coord.includes("new Set(['reportsSnapshot','menuSnapshot','serverInfo','connectionCheck','previewDatabaseRepair','diagnosticsRun'])"));
+assert(coord.includes("['write','kitchen','live','general','background']"));
+assert(app.includes("testCandidate(currentUrl, 'current device URL')"));
+assert(app.includes("testCandidate(confirmedUrl, 'last confirmed fallback URL')"));
+assert(app.indexOf("testCandidate(currentUrl, 'current device URL')") < app.indexOf("testCandidate(confirmedUrl, 'last confirmed fallback URL')"));
+assert(app.includes('Apps Script deployment not found (HTTP 404, URL '));
+assert(app.includes('scriptUrlFingerprint'));
+assert(release.includes("appVersion: '3.13.19'"));
+assert(release.includes("acceptedBackendVersions: Object.freeze(['3.13.18', '3.13.17', '3.13.16'])"));
+console.log('sync routing and HTTP 404 recovery 3.13.18 tests passed');

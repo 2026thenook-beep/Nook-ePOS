@@ -1,0 +1,23 @@
+const fs=require('fs');
+const path=require('path');
+const assert=require('assert');
+const root=path.resolve(__dirname,'..');
+const app=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
+const coord=fs.readFileSync(path.join(root,'js/server-coordinator.js'),'utf8');
+const release=fs.readFileSync(path.join(root,'js/release.js'),'utf8');
+
+assert(release.includes("appVersion: '3.13.19'"));
+assert(coord.includes("if (lane !== 'write') return [0];"));
+assert(coord.includes("return [0, 750, 2000];"));
+assert(coord.includes("Number(err && err.status) === 404"));
+assert(coord.includes("var readGeneration = 0;"));
+assert(coord.includes("readGeneration+=1;"));
+assert(coord.includes("job.readGeneration !== readGeneration"));
+assert(coord.includes("stale.code = 'STALE_RESPONSE'"));
+assert(app.includes("function isStaleResponseError(err)"));
+assert(app.includes("var uiReadGeneration = 0;"));
+assert(app.includes("if (requestedTab !== state.activeTab) uiReadGeneration += 1;"));
+assert(app.includes("Keep the global connection state independent from this one queued write."));
+assert(!app.includes("saveLocalTickets(rows);\n          state.serverReady = false;\n          break;"));
+assert(app.includes("requestGeneration !== uiReadGeneration"));
+console.log('NOOK-REFINE-A 3.13.18 tests passed');

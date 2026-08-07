@@ -7,7 +7,6 @@ const html = fs.readFileSync('index.html', 'utf8');
 const seed = fs.readFileSync('js/seed-data.js', 'utf8');
 assert(release.includes(`appVersion: '${build.release}'`));
 assert(!release.includes('frontendVersion:'), 'release.js must expose one application version source');
-assert(!release.includes('backendVersion:'), 'release.js must expose one application version source');
 assert(release.includes(`databaseVersion: '${build.databaseVersion}'`));
 assert(backend.includes(`var NOOK_VERSION = '${build.backendVersion}';`));
 assert(backend.includes(`var NOOK_DATABASE_VERSION = '${build.databaseVersion}';`));

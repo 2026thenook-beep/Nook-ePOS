@@ -1,0 +1,10 @@
+const fs=require('fs');const assert=require('assert');
+const script=fs.readFileSync('scripts/sync-release.js','utf8');
+const build=JSON.parse(fs.readFileSync('build-info.json','utf8'));
+assert.strictEqual(build.frontendVersion,'3.13.19');
+assert.strictEqual(build.backendVersion,'3.13.18');
+assert(script.includes('const backend = build.backendVersion || app;'),'release sync must respect an independent backend version');
+assert(script.includes('`var NOOK_VERSION = \'${backend}\';`'),'release sync must not force backend to frontend release');
+assert(script.includes('`"FrontendVersion": "${app}"`'),'seed frontend version must follow frontend release');
+assert(script.includes('`"BackendVersion": "${backend}"`'),'seed backend version must remain backend release');
+console.log('3.13.19 frontend-only release sync checks passed');

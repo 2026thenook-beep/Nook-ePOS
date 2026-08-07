@@ -1,0 +1,17 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const css = fs.readFileSync('css/app.css', 'utf8');
+const release = fs.readFileSync('js/release.js', 'utf8');
+assert(release.includes("appVersion: '3.13.19'"));
+assert(app.includes("adminEditMode: 'view'"));
+assert(app.includes("data-action=\"edit-item\""));
+assert(app.includes("Edit complete item"));
+assert(app.includes("state.adminEditMode === 'item'"));
+assert(app.includes("state.adminEditMode === 'reloading'"));
+assert(app.includes("data-action=\"cancel-item-edit\""));
+assert(app.includes("await api('bootstrap')"));
+assert(app.includes("tab === 'Admin') return state.adminEditMode === 'view'"));
+assert(app.includes("Menu Admin refresh application is paused; live sales and Kitchen synchronisation continue."));
+assert(css.includes('.admin-edit-fieldset:disabled'));
+console.log('3.13.18 protected Menu Admin edit workflow checks passed');

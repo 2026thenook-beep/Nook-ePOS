@@ -1,0 +1,14 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const css=fs.readFileSync('css/app.css','utf8');
+const index=fs.readFileSync('index.html','utf8');
+assert(index.includes('id="uiVersion">3.13.19<'));
+['10','20','30','40','50'].forEach(amount=>assert(app.includes('data-modal-action="cash-quick" data-amount="'+amount+'"')));
+assert(app.includes("if (action === 'quick') {") && app.includes("digits = String(Math.round(Core.toNumber(digit, 0) * 100));"));
+assert(app.includes("if (ma === 'cash-quick') editCashKeypad('quick', modalBtn.getAttribute('data-amount'));"));
+assert(css.includes('.cash-quick-actions { display:grid;'));
+assert(app.includes('function scheduleOrderTypePrompt(context)'));
+assert(app.includes("if (tab === 'Till' && !state.cart.length) scheduleOrderTypePrompt('till');"));
+assert((app.match(/scheduleOrderTypePrompt\('till'\)/g)||[]).length >= 4);
+assert(app.includes("if ($('modalRoot').innerHTML) return;"));
+console.log('3.13.18 cash quick tender and order-type recovery checks passed');

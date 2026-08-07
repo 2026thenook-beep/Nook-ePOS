@@ -14,4 +14,4 @@ assert(app.includes("state.kitchenRecentlyCompleted[id] = true;\n    renderKitch
 assert(app.includes('}, 1800);'));
 assert(backend.includes('function receiptVariableQuantityMap_()'));
 assert(backend.includes('function receiptAddOnText_(addOn, variableMap)'));
-console.log('3.8.6 variable quantity and immediate kitchen completion tests passed');
+console.log('3.13.18 variable quantity and immediate kitchen completion tests passed');

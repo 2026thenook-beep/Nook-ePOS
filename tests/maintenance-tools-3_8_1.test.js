@@ -14,4 +14,4 @@ function ok(value, message) { if (!value) throw new Error(message); }
 ok(gs.includes('MailApp.getRemainingDailyQuota()'), 'Email authorisation must invoke MailApp');
 ok(gs.includes("repairDatabase_({ seedIfEmpty: false })"), 'Safe repair must avoid demonstration seeding');
 ok(gs.includes("repairDatabase_({ seedIfEmpty: true })"), 'Setup repair must support required seed defaults');
-console.log('3.8.6 maintenance tools test passed');
+console.log('3.13.18 maintenance tools test passed');

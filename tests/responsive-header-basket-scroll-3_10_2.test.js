@@ -1,0 +1,12 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js', 'utf8');
+const css = fs.readFileSync('css/app.css', 'utf8');
+assert(app.includes("existingBasketScroller = document.querySelector('.ticket-items-scroll')"));
+assert(app.includes('preservedBasketScrollTop'));
+assert(app.includes('shouldPreserveBasketScroll = state.tillFeedback.pendingLineIndex < 0'));
+assert(app.includes('restoredBasketScroller.scrollTop = preservedBasketScrollTop'));
+assert(css.includes('responsive brand/menu pairing'));
+assert(css.includes('grid-template-columns:clamp(82px, 12vw, 155px) minmax(0, 1fr)'));
+assert(css.includes('.nav-menu-button span:last-child { display:none; }'));
+console.log('3.13.18 responsive header and basket scroll checks passed');

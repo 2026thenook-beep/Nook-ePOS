@@ -1,0 +1,18 @@
+const fs = require('fs');
+const assert = require('assert');
+const app = fs.readFileSync('js/app.js','utf8');
+const foundation = fs.readFileSync('js/foundation.js','utf8');
+const backend = fs.readFileSync('google/Code.gs','utf8');
+const release = fs.readFileSync('js/release.js','utf8');
+assert(release.includes("appVersion: '3.13.19'"));
+assert(app.includes("api('connectionCheck')"), 'URL save must use a lightweight connection check');
+assert(app.includes('longReadTimeoutMs: 45000'), 'Long reads must allow Apps Script cold starts');
+assert(foundation.includes("isLongRead"), 'API client must distinguish long reads');
+assert(foundation.includes("'bootstrap','serverInfo','connectionCheck'"), 'Bootstrap and connection checks must be long-read actions');
+assert(app.includes('var previousUrl = getScriptUrl()'), 'Previous URL must be retained for rollback');
+assert(app.includes('setScriptUrl(previousUrl)'), 'Rejected URLs must restore the previous URL');
+assert(app.includes('var loaded = await bootstrap({ preserveData: true })'), 'Full load must preserve the visible Till while checking');
+assert(backend.includes("action === 'connectionCheck'"), 'Backend connectionCheck route missing');
+assert(backend.includes('function connectionCheckResponse_()'), 'Backend lightweight response missing');
+assert(backend.includes("var NOOK_VERSION = '3.13.18'"), 'Compatible backend release mismatch');
+console.log('3.13.18 script URL connection reliability checks passed');

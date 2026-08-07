@@ -1,0 +1,15 @@
+const fs=require('fs'),assert=require('assert');
+const app=fs.readFileSync('js/app.js','utf8');
+const queue=fs.readFileSync('js/queue-manager.js','utf8');
+const coord=fs.readFileSync('js/server-coordinator.js','utf8');
+const release=fs.readFileSync('js/release.js','utf8');
+assert(release.includes("appVersion: '3.14.1'"));
+assert(queue.includes('async function healthCheck()'));
+assert(app.includes("Offline — payments will be stored safely on this device"));
+assert(!app.includes("Payment blocked: server has not loaded successfully."));
+assert(app.includes('Still loading… The server is taking longer than usual.'));
+assert(app.includes('Use Previous Data'));
+assert(app.includes('Try Again'));
+assert(app.includes('entry.generation'));
+assert(coord.includes("interactiveActions = new Set(['reportsSnapshot','ticketHistorySnapshot'"));
+console.log('offline payment and request lifecycle 3.14.1 passed');

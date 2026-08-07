@@ -1,0 +1,14 @@
+const fs=require('fs'),path=require('path'),assert=require('assert');
+const root=path.join(__dirname,'..');
+const app=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
+const queue=fs.readFileSync(path.join(root,'js/queue-manager.js'),'utf8');
+assert(app.includes('async function paymentPrecheck()'));
+assert(app.includes('await QueueManager.healthCheck()'));
+assert(app.includes("return { ok: true, localOnly: !state.serverReady }"));
+assert(app.includes('Offline — payments will be stored safely on this device'));
+assert(!app.includes('Payment blocked: server has not loaded successfully.'));
+assert(app.includes('async function openPaymentMethodModal()'));
+assert(app.includes('async function takePayment(method)'));
+assert(queue.includes('async function healthCheck()'));
+assert(queue.includes('healthCheck: healthCheck'));
+console.log('3.13.18 offline payment checks passed');
